@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OLXify | Car Listings Scraper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050508;
+            --bg-card: #0c0c12;
+            --bg-card-hover: #111118;
+            --bg-input: #16161f;
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --border-glow: rgba(139, 92, 246, 0.4);
+            --text-primary: #f4f4f5;
+            --text-secondary: #71717a;
+            --text-muted: #52525b;
+            --accent-purple: #8b5cf6;
+            --accent-pink: #ec4899;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-green: #10b981;
+            --accent-orange: #f97316;
+            --accent-red: #ef4444;
+            --gradient-main: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f97316 100%);
+            --gradient-subtle: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.1) 100%);
+            --shadow-glow: 0 0 60px rgba(139, 92, 246, 0.3);
+            --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Animated Background */
+        .bg-animated {
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            overflow: hidden;
+        }
+
+        .bg-animated::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(ellipse at 20% 30%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(236, 72, 153, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 60% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 50%);
+            animation: bgFloat 20s ease-in-out infinite;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(2%, 2%) rotate(1deg); }
+            50% { transform: translate(-1%, 3%) rotate(-1deg); }
+            75% { transform: translate(-2%, -1%) rotate(0.5deg); }
+        }
+
+        /* Grid overlay */
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: 
+                linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+        }
+
+        .logo-wrapper {
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--gradient-main);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: var(--shadow-glow);
+            animation: logoPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .logo-text {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 1.15rem;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .tagline-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-purple);
+            border-radius: 50%;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 32px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), transparent);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .card:hover {
+            border-color: var(--border-glow);
+            background: var(--bg-card-hover);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-card);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-subtle);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .card-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+
+        .card-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px 20px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px 20px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .checkbox-wrapper:hover {
+            border-color: var(--accent-purple);
+        }
+
+        .checkbox-custom {
+            width: 24px;
+            height: 24px;
+            background: var(--bg-dark);
+            border: 2px solid var(--text-muted);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .checkbox-wrapper input:checked + .checkbox-custom {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+        }
+
+        .checkbox-wrapper input:checked + .checkbox-custom::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .checkbox-wrapper input {
+            display: none;
+        }
+
+        .checkbox-label {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .checkbox-hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 18px 36px;
+            border: none;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-primary {
+            background: var(--gradient-main);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px -10px rgba(139, 92, 246, 0.5);
+        }
+
+        .btn-primary:hover::before {
+            opacity: 1;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 22px;
+            height: 22px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent-purple);
+            transform: scale(1.02);
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 6px;
+        }
+
+        /* Status Badge */
+        .status-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .status-idle {
+            background: rgba(113, 113, 122, 0.15);
+            color: var(--text-secondary);
+        }
+        .status-idle .status-dot { background: var(--text-secondary); }
+
+        .status-scraping {
+            background: rgba(139, 92, 246, 0.15);
+            color: #a78bfa;
+        }
+        .status-scraping .status-dot { background: var(--accent-purple); }
+
+        .status-fetching_contacts {
+            background: rgba(6, 182, 212, 0.15);
+            color: #22d3ee;
+        }
+        .status-fetching_contacts .status-dot { background: var(--accent-cyan); }
+
+        .status-complete {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+        }
+        .status-complete .status-dot { background: var(--accent-green); }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+        }
+        .status-error .status-dot { background: var(--accent-red); }
+
+        /* Progress Log */
+        .progress-log {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            height: 320px;
+            overflow-y: auto;
+            font-family: 'SF Mono', 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 0.82rem;
+        }
+
+        .progress-log::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .progress-log::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .progress-log::-webkit-scrollbar-thumb {
+            background: var(--border-subtle);
+            border-radius: 4px;
+        }
+
+        .log-entry {
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            gap: 16px;
+            transition: background 0.2s;
+        }
+
+        .log-entry:hover {
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            color: var(--accent-purple);
+            font-weight: 600;
+            flex-shrink: 0;
+            opacity: 0.8;
+        }
+
+        .log-msg {
+            color: var(--text-secondary);
+            word-break: break-word;
+        }
+
+        .log-empty {
+            padding: 40px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        /* Files Card */
+        .files-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .files-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 22px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            margin-bottom: 12px;
+            transition: all 0.3s;
+        }
+
+        .file-item:hover {
+            border-color: var(--accent-purple);
+            background: rgba(139, 92, 246, 0.05);
+            transform: translateX(4px);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .file-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--gradient-subtle);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .file-details h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .file-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-download {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid var(--accent-purple);
+            color: var(--accent-purple);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-download:hover {
+            background: var(--accent-purple);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .footer a {
+            color: var(--accent-purple);
+            text-decoration: none;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .container { padding: 24px 16px; }
+            .logo-text { font-size: 2rem; }
+            .card { padding: 24px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .file-item { flex-direction: column; gap: 16px; align-items: stretch; }
+            .btn-download { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animated"></div>
+    <div class="grid-overlay"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header fade-in">
+            <div class="logo-wrapper">
+                <div class="logo-icon">🚗</div>
+                <h1 class="logo-text">OLXify</h1>
+            </div>
+            <p class="tagline">
+                <span>Lahore Cars</span>
+                <span class="tagline-dot"></span>
+                <span>High-Performance Data Extraction</span>
+                <span class="tagline-dot"></span>
+                <span>TSV Export</span>
+            </p>
+        </header>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Controls Card -->
+            <div class="card fade-in" style="animation-delay: 0.1s">
+                <div class="card-header">
+                    <div class="card-icon">⚡</div>
+                    <div>
+                        <h2 class="card-title">Scraper Controls</h2>
+                        <p class="card-subtitle">Configure and run the scraper</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Maximum Pages</label>
+                    <input type="number" class="form-input" id="maxPages" value="5" min="1" max="50" placeholder="Enter max pages (1-50)">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Maximum Listings</label>
+                    <input type="number" class="form-input" id="maxListings" value="50" min="1" max="500" placeholder="Enter max listings (1-500)">
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="fetchContacts" checked>
+                        <div class="checkbox-custom"></div>
+                        <div>
+                            <div class="checkbox-label">Fetch Contact Information</div>
+                            <div class="checkbox-hint">Requires OLX login in browser window</div>
+                        </div>
+                    </label>
+                </div>
+
+                <button class="btn btn-primary" id="startBtn" onclick="startScraper()">
+                    <span class="btn-icon">🚀</span>
+                    <span>Start Scraping</span>
+                </button>
+            </div>
+
+            <!-- Status Card -->
+            <div class="card fade-in" style="animation-delay: 0.2s">
+                <div class="card-header">
+                    <div class="card-icon">📊</div>
+                    <div>
+                        <h2 class="card-title">Live Status</h2>
+                        <p class="card-subtitle">Real-time scraping progress</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statListings">0</div>
+                        <div class="stat-label">Listings</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statPhase">—</div>
+                        <div class="stat-label">Phase</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTime">0s</div>
+                        <div class="stat-label">Elapsed</div>
+                    </div>
+                </div>
+
+                <div class="status-section">
+                    <div class="status-badge status-idle" id="statusBadge">
+                        <div class="status-dot"></div>
+                        <span>Ready</span>
+                    </div>
+                </div>
+
+                <div class="progress-log" id="progressLog">
+                    <div class="log-empty">
+                        <div>📋</div>
+                        <p>Waiting to start scraping...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Files Card -->
+        <div class="card fade-in" style="animation-delay: 0.3s">
+            <div class="files-header">
+                <div class="card-header" style="margin-bottom: 0;">
+                    <div class="card-icon">📁</div>
+                    <div>
+                        <h2 class="card-title">Output Files</h2>
+                        <p class="card-subtitle">Download your scraped data</p>
+                    </div>
+                </div>
+                <button class="btn-download" onclick="loadFiles()" style="padding: 8px 16px;">
+                    ↻ Refresh
+                </button>
+            </div>
+            <div class="files-list" id="filesList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📂</div>
+                    <p>No files yet. Start scraping to generate output files.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Google Sheets Status Card -->
+        <div class="card fade-in" style="animation-delay: 0.4s; margin-top: 32px;" id="googleSheetsCard">
+            <div class="card-header">
+                <div class="card-icon">📋</div>
+                <div>
+                    <h2 class="card-title">Google Sheets Auto-Export</h2>
+                    <p class="card-subtitle">Data automatically syncs to your spreadsheet</p>
+                </div>
+            </div>
+            
+            <div id="sheetsStatus" style="padding: 20px; background: var(--bg-input); border-radius: 14px; border: 1px solid var(--border-subtle);">
+                <p style="color: var(--text-muted);">Checking status...</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>OLXify • Lahore Cars • Auto Google Sheets Export • Fast & Safe</p>
+        </footer>
+    </div>
+
+    <script>
+        let pollInterval = null;
+        let startTime = null;
+        let timerInterval = null;
+
+        async function startScraper() {
+            const maxPages = parseInt(document.getElementById('maxPages').value) || 5;
+            const maxListings = parseInt(document.getElementById('maxListings').value) || 100;
+            const fetchContacts = document.getElementById('fetchContacts').checked;
+
+            const btn = document.getElementById('startBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div><span>Running...</span>';
+
+            try {
+                const resp = await fetch('/api/start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        max_pages: maxPages,
+                        max_listings: maxListings,
+                        fetch_contact_info: fetchContacts
+                    })
+                });
+                
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    alert(err.error || 'Failed to start scraper');
+                    resetButton();
+                    return;
+                }
+
+                startTime = Date.now();
+                startPolling();
+                startTimer();
+            } catch (e) {
+                alert('Connection error: ' + e.message);
+                resetButton();
+            }
+        }
+
+        function resetButton() {
+            const btn = document.getElementById('startBtn');
+            btn.disabled = false;
+            btn.innerHTML = '<span class="btn-icon">🚀</span><span>Start Scraping</span>';
+        }
+
+        function startPolling() {
+            updateStatus();
+            pollInterval = setInterval(updateStatus, 1500);
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if (startTime) {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    document.getElementById('statTime').textContent = formatTime(elapsed);
+                }
+            }, 1000);
+        }
+
+        function formatTime(seconds) {
+            if (seconds < 60) return seconds + 's';
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return mins + 'm ' + secs + 's';
+        }
+
+        async function updateStatus() {
+            try {
+                const resp = await fetch('/api/status');
+                const data = await resp.json();
+
+                // Update badge
+                const badge = document.getElementById('statusBadge');
+                badge.className = 'status-badge status-' + (data.running ? data.phase : data.phase);
+                
+                const phaseNames = {
+                    'idle': 'Ready',
+                    'scraping': 'Scraping',
+                    'fetching_contacts': 'Fetching Contacts',
+                    'complete': 'Complete',
+                    'error': 'Error'
+                };
+                badge.innerHTML = '<div class="status-dot"></div><span>' + (phaseNames[data.phase] || data.phase) + '</span>';
+
+                // Update phase icon
+                const phaseIcons = {
+                    'idle': '—',
+                    'scraping': '📥',
+                    'fetching_contacts': '📞',
+                    'complete': '✅',
+                    'error': '❌'
+                };
+                document.getElementById('statPhase').textContent = phaseIcons[data.phase] || '—';
+                
+                // Update listings count
+                if (data.result && data.result.count) {
+                    document.getElementById('statListings').textContent = data.result.count;
+                }
+
+                // Update log
+                const logDiv = document.getElementById('progressLog');
+                if (data.progress && data.progress.length > 0) {
+                    logDiv.innerHTML = data.progress.map(p => 
+                        '<div class="log-entry"><span class="log-time">' + p.time + '</span><span class="log-msg">' + escapeHtml(p.message) + '</span></div>'
+                    ).join('');
+                    logDiv.scrollTop = logDiv.scrollHeight;
+                }
+
+                // Check if done
+                if (!data.running && data.phase !== 'idle') {
+                    clearInterval(pollInterval);
+                    clearInterval(timerInterval);
+                    resetButton();
+                    loadFiles();
+                }
+            } catch (e) {
+                console.error('Status update error:', e);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function loadFiles() {
+            try {
+                const resp = await fetch('/api/files');
+                const files = await resp.json();
+
+                const list = document.getElementById('filesList');
+                
+                if (!files || files.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📂</div><p>No files yet. Start scraping to generate output files.</p></div>';
+                    return;
+                }
+
+                list.innerHTML = files.map(f => {
+                    const icon = f.name.endsWith('.tsv') ? '📊' : '📄';
+                    return '<div class="file-item">' +
+                        '<div class="file-info">' +
+                            '<div class="file-icon">' + icon + '</div>' +
+                            '<div class="file-details">' +
+                                '<h4>' + escapeHtml(f.name) + '</h4>' +
+                                '<div class="file-meta">' +
+                                    '<span>' + formatSize(f.size) + '</span>' +
+                                    '<span>' + formatDate(f.modified) + '</span>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<button class="btn-download" onclick="downloadFile(\'' + escapeHtml(f.name) + '\')">Download</button>' +
+                    '</div>';
+                }).join('');
+            } catch (e) {
+                console.error('Files load error:', e);
+            }
+        }
+
+        function downloadFile(name) {
+            window.location.href = '/api/download/' + encodeURIComponent(name);
+        }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        function formatDate(iso) {
+            const d = new Date(iso);
+            return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+        }
+
+        // Google Sheets Auto-Export Status
+        async function checkGoogleSheets() {
+            try {
+                const resp = await fetch('/api/google-sheets/status');
+                const data = await resp.json();
+                
+                const statusDiv = document.getElementById('sheetsStatus');
+                
+                if (data.configured) {
+                    if (data.authenticated) {
+                        statusDiv.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="font-size: 2rem;">✅</div>
+                                <div>
+                                    <p style="color: var(--accent-green); font-weight: 600; margin-bottom: 4px;">Auto-Export Enabled</p>
+                                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Data automatically uploads to your Google Sheet after each scrape</p>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        statusDiv.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="font-size: 2rem;">🔑</div>
+                                <div>
+                                    <p style="color: var(--accent-cyan); font-weight: 600; margin-bottom: 4px;">First-Time Login Required</p>
+                                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Click "Start Scraping" - browser will open for one-time Google login</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    statusDiv.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="font-size: 2rem;">⚙️</div>
+                            <div>
+                                <p style="color: var(--accent-orange); font-weight: 600; margin-bottom: 4px;">Setup Required</p>
+                                <p style="color: var(--text-secondary); font-size: 0.9rem;">Place client_secret.json in project folder (see docs for setup)</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                document.getElementById('sheetsStatus').innerHTML = '<p style="color: var(--accent-red);">Error checking status</p>';
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFiles();
+            updateStatus();
+            checkGoogleSheets();
+        });
+    </script>
+</body>
+</html>
