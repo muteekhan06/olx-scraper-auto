@@ -1,10 +1,25 @@
 """
-Configuration settings for OLX Scraper.
+Configuration settings for OLXify.
 Centralized config for easy tuning and maintenance.
 """
 
+import os
 from dataclasses import dataclass
 from typing import List
+
+
+# Load environment variables from .env file
+def _load_env():
+    env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+    if os.path.exists(env_path):
+        with open(env_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
+                    os.environ.setdefault(key.strip(), value.strip())
+
+_load_env()
 
 
 @dataclass(frozen=True)
@@ -78,12 +93,14 @@ class OutputConfig:
         "whatsapp",
         "mobileNumbers",
     )
-    
-    # Default Google Sheet ID - Replace with your own spreadsheet ID
-    # Find it in your sheet URL: docs.google.com/spreadsheets/d/[THIS-IS-YOUR-ID]/edit
-    GOOGLE_SHEET_ID: str = ""
 
 
 # Global instances
 SCRAPER_CONFIG = ScraperConfig()
-OUTPUT_CONFIG = OutputConfig()
+
+# OutputConfig needs to be created after env is loaded
+class OutputConfigWithEnv(OutputConfig):
+    """OutputConfig with environment variable support."""
+    GOOGLE_SHEET_ID: str = os.environ.get("GOOGLE_SHEET_ID", "")
+
+OUTPUT_CONFIG = OutputConfigWithEnv()
