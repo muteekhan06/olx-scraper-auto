@@ -42,8 +42,36 @@ def add_progress(message: str) -> None:
             scraper_state["progress"] = scraper_state["progress"][-100:]
     progress_queue.put(entry)
 
+def cleanup_old_local_files() -> int:
+    """
+    Delete old local output files (TSV/JSON) from previous days.
+    Only affects LOCAL files - never touches Google Sheets!
+    
+    Returns:
+        Number of files deleted
+    """
+    output_dir = OUTPUT_CONFIG.OUTPUT_DIR
+    if not os.path.exists(output_dir):
+        return 0
+    
+    today_str = date.today().isoformat()
+    deleted = 0
+    
+    for filename in os.listdir(output_dir):
+        if filename.endswith((".tsv", ".json")):
+            # Keep today's files, delete older ones
+            if today_str not in filename:
+                try:
+                    filepath = os.path.join(output_dir, filename)
+                    os.remove(filepath)
+                    deleted += 1
+                except Exception:
+                    pass
+    
+    return deleted
 
-def run_scraper_task(max_pages: int, max_listings: int, fetch_contact_info: bool) -> None:
+
+def run_scraper_task(max_pages: int, max_listings: int, fetch_contact_info: bool, selected_locations: list) -> None:
     global scraper_state
     try:
         with state_lock:
@@ -53,8 +81,23 @@ def run_scraper_task(max_pages: int, max_listings: int, fetch_contact_info: bool
                 "started_at": datetime.now().isoformat(), "completed_at": None,
             })
         
-        add_progress(f"Starting: max_pages={max_pages}, max_listings={max_listings}")
-        listings = scrape_listings(max_pages, max_listings, add_progress)
+        # Clean up old local files before starting
+        deleted = cleanup_old_local_files()
+        if deleted > 0:
+            add_progress(f"🧹 Cleaned up {deleted} old local file(s)")
+        
+        # Show selected locations
+        if selected_locations:
+            from app.config import SCRAPER_CONFIG
+            location_names = [
+                SCRAPER_CONFIG.LOCATIONS[key]["name"] 
+                for key in selected_locations 
+                if key in SCRAPER_CONFIG.LOCATIONS
+            ]
+            add_progress(f"Selected locations: {', '.join(location_names)}")
+        
+        add_progress(f"Starting: max_pages={max_pages}, listings_per_location={SCRAPER_CONFIG.LISTINGS_PER_LOCATION}")
+        listings = scrape_listings(max_pages, max_listings, add_progress, selected_locations)
         
         if not listings:
             add_progress("No listings found.")
@@ -124,6 +167,20 @@ def get_status():
         return jsonify(dict(scraper_state, progress=scraper_state["progress"][-20:]))
 
 
+@app.route("/api/locations")
+def get_locations():
+    """Get available scraping locations."""
+    locations = []
+    for key, info in SCRAPER_CONFIG.LOCATIONS.items():
+        locations.append({
+            "key": key,
+            "name": info["name"],
+            "url": info["url"],
+            "enabled": info.get("enabled", True)
+        })
+    return jsonify(locations)
+
+
 @app.route("/api/start", methods=["POST"])
 def start_scraper():
     with state_lock:
@@ -134,9 +191,33 @@ def start_scraper():
     max_pages = max(1, min(50, int(data.get("max_pages", 5))))
     max_listings = max(1, min(500, int(data.get("max_listings", 100))))
     fetch_contact = bool(data.get("fetch_contact_info", True))
+    selected_locations = data.get("locations", None)
     
-    threading.Thread(target=run_scraper_task, args=(max_pages, max_listings, fetch_contact), daemon=True).start()
-    return jsonify({"message": "Started", "max_pages": max_pages, "max_listings": max_listings})
+    # Validate locations if provided
+    if selected_locations is not None:
+        if not isinstance(selected_locations, list):
+            return jsonify({"error": "locations must be an array"}), 400
+        # Filter to valid locations only
+        valid_locations = [
+            loc for loc in selected_locations 
+            if loc in SCRAPER_CONFIG.LOCATIONS
+        ]
+        if not valid_locations:
+            return jsonify({"error": "No valid locations selected"}), 400
+        selected_locations = valid_locations
+    
+    threading.Thread(
+        target=run_scraper_task, 
+        args=(max_pages, max_listings, fetch_contact, selected_locations), 
+        daemon=True
+    ).start()
+    
+    return jsonify({
+        "message": "Started", 
+        "max_pages": max_pages, 
+        "max_listings": max_listings,
+        "locations": selected_locations or "all"
+    })
 
 
 @app.route("/api/files")

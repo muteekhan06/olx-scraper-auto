@@ -326,6 +326,65 @@
             color: var(--text-muted);
             margin-top: 2px;
         }
+        
+        /* Location Selection Styles */
+        .location-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 640px) {
+            .location-grid { grid-template-columns: 1fr; }
+        }
+        
+        .location-checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .location-checkbox-wrapper:hover {
+            border-color: var(--accent-purple);
+            background: rgba(139, 92, 246, 0.05);
+        }
+        
+        .location-checkbox-wrapper input:checked + .checkbox-custom {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+        }
+        
+        .location-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .select-all-btn {
+            padding: 10px 16px;
+            background: transparent;
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 12px;
+        }
+        
+        .select-all-btn:hover {
+            background: var(--accent-cyan);
+            color: white;
+        }
 
         /* Buttons */
         .btn {
@@ -693,11 +752,11 @@
                 <h1 class="logo-text">OLXify</h1>
             </div>
             <p class="tagline">
-                <span>Lahore Cars</span>
+                <span>Multi-Location Scraper</span>
                 <span class="tagline-dot"></span>
-                <span>High-Performance Data Extraction</span>
+                <span>50 Listings Per Area</span>
                 <span class="tagline-dot"></span>
-                <span>TSV Export</span>
+                <span>TSV + Google Sheets Export</span>
             </p>
         </header>
 
@@ -714,13 +773,21 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Maximum Pages</label>
-                    <input type="number" class="form-input" id="maxPages" value="5" min="1" max="50" placeholder="Enter max pages (1-50)">
+                    <label class="form-label">Select Locations (50 listings from each)</label>
+                    <button class="select-all-btn" onclick="toggleAllLocations()">
+                        ✓ Select All Locations
+                    </button>
+                    <div class="location-grid" id="locationGrid">
+                        <!-- Locations will be loaded dynamically -->
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-muted);">
+                            Loading locations...
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Maximum Listings</label>
-                    <input type="number" class="form-input" id="maxListings" value="50" min="1" max="500" placeholder="Enter max listings (1-500)">
+                    <label class="form-label">Maximum Pages per Location</label>
+                    <input type="number" class="form-input" id="maxPages" value="3" min="1" max="10" placeholder="Enter max pages (1-10)">
                 </div>
 
                 <div class="form-group">
@@ -820,7 +887,7 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>OLXify • Lahore Cars • Auto Google Sheets Export • Fast & Safe</p>
+            <p>OLXify • Multi-Location Scraper • 50 Per Area • Auto Google Sheets Export • Fast & Safe</p>
         </footer>
     </div>
 
@@ -828,11 +895,52 @@
         let pollInterval = null;
         let startTime = null;
         let timerInterval = null;
+        let availableLocations = [];
+
+        async function loadLocations() {
+            try {
+                const resp = await fetch('/api/locations');
+                availableLocations = await resp.json();
+                
+                const grid = document.getElementById('locationGrid');
+                if (availableLocations && availableLocations.length > 0) {
+                    grid.innerHTML = availableLocations.map(loc => 
+                        '<label class="location-checkbox-wrapper">' +
+                            '<input type="checkbox" class="location-checkbox" value="' + loc.key + '" ' + (loc.enabled ? 'checked' : '') + '>' +
+                            '<div class="checkbox-custom"></div>' +
+                            '<div class="location-label">📍 ' + escapeHtml(loc.name) + '</div>' +
+                        '</label>'
+                    ).join('');
+                } else {
+                    grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--accent-red);">No locations available</div>';
+                }
+            } catch (e) {
+                console.error('Failed to load locations:', e);
+                document.getElementById('locationGrid').innerHTML = 
+                    '<div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--accent-red);">Error loading locations</div>';
+            }
+        }
+
+        function toggleAllLocations() {
+            const checkboxes = document.querySelectorAll('.location-checkbox');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+        }
+
+        function getSelectedLocations() {
+            const checkboxes = document.querySelectorAll('.location-checkbox:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
 
         async function startScraper() {
-            const maxPages = parseInt(document.getElementById('maxPages').value) || 5;
-            const maxListings = parseInt(document.getElementById('maxListings').value) || 100;
+            const maxPages = parseInt(document.getElementById('maxPages').value) || 3;
             const fetchContacts = document.getElementById('fetchContacts').checked;
+            const selectedLocations = getSelectedLocations();
+
+            if (selectedLocations.length === 0) {
+                alert('Please select at least one location to scrape.');
+                return;
+            }
 
             const btn = document.getElementById('startBtn');
             btn.disabled = true;
@@ -844,8 +952,9 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         max_pages: maxPages,
-                        max_listings: maxListings,
-                        fetch_contact_info: fetchContacts
+                        max_listings: 50, // Per location
+                        fetch_contact_info: fetchContacts,
+                        locations: selectedLocations
                     })
                 });
                 
@@ -1048,6 +1157,7 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            loadLocations();
             loadFiles();
             updateStatus();
             checkGoogleSheets();

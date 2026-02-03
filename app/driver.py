@@ -1,18 +1,14 @@
 """
 Chrome WebDriver management with anti-detection measures.
+Sequential processing - no threading required.
 """
 
-import threading
-from typing import Optional, Set
+from typing import Optional
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
-
-# Thread-local storage for per-thread drivers
-_thread_local = threading.local()
-_active_drivers: Set[webdriver.Chrome] = set()
-_drivers_lock = threading.Lock()
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 def build_driver(headless: bool = True) -> webdriver.Chrome:
@@ -50,16 +46,15 @@ def build_driver(headless: bool = True) -> webdriver.Chrome:
     )
     
     try:
-        driver = webdriver.Chrome(options=chrome_opts)
+        # Use webdriver-manager to automatically handle ChromeDriver
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_opts)
         
         # Mask webdriver property
         driver.execute_cdp_cmd(
             "Page.addScriptToEvaluateOnNewDocument",
             {"source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"}
         )
-        
-        with _drivers_lock:
-            _active_drivers.add(driver)
         
         return driver
         
@@ -77,9 +72,6 @@ def build_driver(headless: bool = True) -> webdriver.Chrome:
             
             driver = uc.Chrome(options=uc_opts, use_subprocess=True)
             
-            with _drivers_lock:
-                _active_drivers.add(driver)
-            
             return driver
             
         except Exception:
@@ -87,40 +79,3 @@ def build_driver(headless: bool = True) -> webdriver.Chrome:
                 f"Failed to initialize Chrome WebDriver. "
                 f"Ensure Google Chrome is installed. Error: {primary_error}"
             )
-
-
-def get_thread_driver(headless: bool = True) -> webdriver.Chrome:
-    """
-    Get or create a driver for the current thread.
-    
-    Args:
-        headless: Run in headless mode if True
-        
-    Returns:
-        Chrome WebDriver for this thread
-    """
-    driver: Optional[webdriver.Chrome] = getattr(_thread_local, "driver", None)
-    
-    # Check if driver is still alive
-    if driver is not None:
-        try:
-            _ = driver.current_url
-            return driver
-        except Exception:
-            driver = None
-    
-    # Create new driver for this thread
-    driver = build_driver(headless)
-    _thread_local.driver = driver
-    return driver
-
-
-def cleanup_all_drivers() -> None:
-    """Close all active WebDriver instances."""
-    with _drivers_lock:
-        for driver in list(_active_drivers):
-            try:
-                driver.quit()
-            except Exception:
-                pass
-        _active_drivers.clear()

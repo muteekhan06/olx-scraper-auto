@@ -8,8 +8,9 @@ import os
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
+from app.config import CONFIG_DIR
 
-COOKIES_FILE = "olx_cookies.json"
+COOKIES_FILE = os.path.join(CONFIG_DIR, "olx_cookies.json")
 COOKIE_MAX_AGE_DAYS = 7  # Cookies valid for 7 days
 
 

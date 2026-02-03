@@ -16,10 +16,6 @@ import requests
 
 from app.config import SCRAPER_CONFIG, OUTPUT_CONFIG
 from app.driver import build_driver
-from app.cookies import (
-    save_cookies, load_cookies, delete_cookies,
-    apply_cookies_to_driver, get_cookies_from_driver
-)
 
 
 HOME_URL = "https://www.olx.com.pk/"
@@ -62,14 +58,24 @@ def _has_auth_cookies(driver) -> bool:
     except Exception:
         return False
     
-    token_keys = {"kc_access_token", "kc_refresh_token", "kc_id_token", "hb-session-id"}
+    # Check for various auth cookie types (including Google OAuth)
+    token_keys = {
+        "kc_access_token", "kc_refresh_token", "kc_id_token",  # Standard OLX
+        "hb-session-id", "anonymous_session_id",  # Session cookies
+        "access_token", "id_token", "refresh_token",  # Generic OAuth
+    }
     return any(k in cookies and bool(cookies.get(k)) for k in token_keys)
 
 
 def _has_auth_in_cookies_list(cookies: List[Dict]) -> bool:
     """Check if authentication cookies are present in a cookie list."""
     cookie_dict = {c.get("name"): c.get("value") for c in cookies}
-    token_keys = {"kc_access_token", "kc_refresh_token", "kc_id_token", "hb-session-id"}
+    # Check for various auth cookie types (including Google OAuth)
+    token_keys = {
+        "kc_access_token", "kc_refresh_token", "kc_id_token",  # Standard OLX
+        "hb-session-id", "anonymous_session_id",  # Session cookies
+        "access_token", "id_token", "refresh_token",  # Generic OAuth
+    }
     return any(k in cookie_dict and bool(cookie_dict.get(k)) for k in token_keys)
 
 
@@ -87,11 +93,7 @@ def _wait_for_login(driver, max_wait_s: int, progress_callback: Optional[Callabl
     while time.time() - start < max_wait_s:
         if _has_auth_cookies(driver):
             if progress_callback:
-                progress_callback("Login detected! Saving cookies for next time...")
-            
-            # Save cookies for future use
-            cookies = get_cookies_from_driver(driver)
-            save_cookies(cookies)
+                progress_callback("Login detected! Proceeding to fetch contacts...")
             
             return
         
@@ -207,29 +209,6 @@ def _fetch_contact(
         return None, str(e)
 
 
-def _test_saved_cookies(cookies: List[Dict], progress_callback: Optional[Callable] = None) -> bool:
-    """Test if saved cookies are still valid by making a test API call."""
-    if not cookies or not _has_auth_in_cookies_list(cookies):
-        return False
-    
-    sess = _transfer_cookies_from_list(cookies)
-    
-    # Try a simple API call to verify cookies work
-    try:
-        resp = sess.get("https://www.olx.com.pk/api/user/", timeout=10)
-        if resp.status_code in (200, 304):
-            if progress_callback:
-                progress_callback("✅ Using saved login session (no login needed!)")
-            return True
-        elif resp.status_code in (401, 403):
-            if progress_callback:
-                progress_callback("Saved session expired, need fresh login...")
-            return False
-    except Exception:
-        pass
-    
-    return False
-
 
 def fetch_contacts(
     listings: List[Dict],
@@ -237,7 +216,7 @@ def fetch_contacts(
 ) -> List[Dict]:
     """
     Fetch contact information for listings.
-    Uses saved cookies if available - login only needed once!
+    Requires manual login each time (no cookie persistence).
     
     Args:
         listings: List of listing dictionaries with Ad IDs
@@ -268,40 +247,29 @@ def fetch_contacts(
         if ad:
             id_to_listing[str(ad)] = item
     
-    # Try to use saved cookies first
-    saved_cookies = load_cookies()
-    driver = None
+    # Initialize Guest Session (No Login Required)
+    if progress_callback:
+        progress_callback("Initializing guest session (Headless)...")
+    
+    # We can run headless now since we don't need manual login interaction
+    driver = build_driver(headless=True)
     sess = None
     
-    if saved_cookies and _test_saved_cookies(saved_cookies, progress_callback):
-        # Use saved cookies - no browser needed!
-        sess = _transfer_cookies_from_list(saved_cookies)
-    else:
-        # Need fresh login
-        if progress_callback:
-            progress_callback("Opening browser for OLX login...")
+    try:
+        # Visit home page to establish session/cookies
+        driver.get(HOME_URL)
+        time.sleep(3) # Wait for initial page load and guest cookies
         
-        driver = build_driver(headless=False)  # Visible for login
+        # Transfer these guest cookies to our requests session
+        sess = _transfer_cookies(driver)
         
-        try:
-            if progress_callback:
-                progress_callback("Please log in to OLX in the browser window...")
-            
-            _wait_for_login(driver, SCRAPER_CONFIG.LOGIN_TIMEOUT, progress_callback)
-            
-            if progress_callback:
-                progress_callback("Preparing API session...")
-            
-            sess = _transfer_cookies(driver)
-            _light_browsing(driver)
-            
-        except Exception as e:
-            if driver:
-                try:
-                    driver.quit()
-                except Exception:
-                    pass
-            raise e
+    except Exception as e:
+        if driver:
+            try:
+                driver.quit()
+            except Exception:
+                pass
+        raise e
     
     # Fetch contacts
     successes = 0
@@ -328,17 +296,17 @@ def fetch_contacts(
                         progress_callback(f"Rate limited at ad {i}. Pausing...")
                     time.sleep(5)
                 
-                # If we have a driver, refresh cookies
+                # If we encounter auth errors, we might need to refresh our guest session
                 if driver:
                     try:
+                        driver.get(HOME_URL)
+                        time.sleep(2)
                         sess = _transfer_cookies(driver)
                     except Exception:
                         pass
-                else:
-                    # Cookies might be expired, delete and require fresh login next time
-                    delete_cookies()
             
             time.sleep(1.2 * (attempt + 1))
+
         
         if data is None:
             failures += 1
@@ -363,11 +331,11 @@ def fetch_contacts(
         if progress_callback and i % 10 == 0:
             progress_callback(f"Fetched contacts: {i}/{len(ad_ids)} ({successes} success, {failures} failed)")
         
-        # Occasional light browsing (only if driver is active)
+        # Occasional light browsing to keep session alive
         if driver and i % random.randint(8, 12) == 0:
             _light_browsing(driver)
     
-    # Close driver if it was opened
+    # Close driver
     if driver:
         try:
             driver.quit()

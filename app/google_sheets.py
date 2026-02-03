@@ -8,7 +8,7 @@ Setup (One-time, FREE):
 3. Go to APIs & Services > Enable APIs > Enable "Google Sheets API"
 4. Go to APIs & Services > Credentials > Create Credentials > OAuth client ID
 5. Select "Desktop app" as application type
-6. Download the JSON and save as "client_secret.json" in project folder
+6. Download the JSON and save as "config/client_secret.json"
 7. Run the script - it will open browser for login ONCE
 8. After that, it's fully automated!
 """
@@ -18,12 +18,12 @@ import os
 from datetime import date
 from typing import Dict, List, Optional
 
-from app.config import OUTPUT_CONFIG
+from app.config import OUTPUT_CONFIG, CONFIG_DIR
 
 
-# File paths
-CLIENT_SECRET_FILE = "client_secret.json"
-TOKEN_FILE = "google_token.json"
+# File paths (in config/ directory)
+CLIENT_SECRET_FILE = os.path.join(CONFIG_DIR, "client_secret.json")
+TOKEN_FILE = os.path.join(CONFIG_DIR, "google_token.json")
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 
@@ -210,8 +210,16 @@ def export_to_google_sheets(
         for col in columns:
             if col in OUTPUT_CONFIG.EXCLUDED_COLUMNS:
                 continue
+            
             val = item.get(col, "")
-            row.append(clean_value(val))
+            cleaned_val = clean_value(val)
+            
+            # Make Link clickable
+            if col == "Link" and cleaned_val and cleaned_val.startswith("http"):
+                # Use "View Ad" as label to keep cell content clean and formula short
+                cleaned_val = f'=HYPERLINK("{cleaned_val}", "View Ad")'
+            
+            row.append(cleaned_val)
         rows.append(row)
     
     # Write data
@@ -228,7 +236,7 @@ def export_to_google_sheets(
         body=body
     ).execute()
     
-    # Format header row (bold)
+    # Apply premium formatting
     try:
         # Get sheet ID
         spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
@@ -238,32 +246,105 @@ def export_to_google_sheets(
                 sheet_id = s["properties"]["sheetId"]
                 break
         
+        if sheet_id is not None and progress_callback:
+            progress_callback("Applying premium formatting...")
+        
         if sheet_id is not None:
-            request = {
-                "requests": [{
+            num_rows = len(rows)
+            num_cols = len(columns)
+            
+            requests = [
+                # 1. Set Merriweather font + center align + middle align + wrap for ALL cells
+                {
                     "repeatCell": {
                         "range": {
                             "sheetId": sheet_id,
                             "startRowIndex": 0,
-                            "endRowIndex": 1
+                            "endRowIndex": num_rows,
+                            "startColumnIndex": 0,
+                            "endColumnIndex": num_cols
                         },
                         "cell": {
                             "userEnteredFormat": {
-                                "textFormat": {"bold": True}
+                                "textFormat": {
+                                    "fontFamily": "Merriweather",
+                                    "fontSize": 10
+                                },
+                                "horizontalAlignment": "CENTER",
+                                "verticalAlignment": "MIDDLE",
+                                "wrapStrategy": "WRAP"
                             }
                         },
-                        "fields": "userEnteredFormat.textFormat.bold"
+                        "fields": "userEnteredFormat"
                     }
-                }]
-            }
-            service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=request).execute()
-    except Exception:
-        pass  # Formatting is optional
+                },
+                # 2. Header row: Bold + Background color
+                {
+                    "repeatCell": {
+                        "range": {
+                            "sheetId": sheet_id,
+                            "startRowIndex": 0,
+                            "endRowIndex": 1,
+                            "startColumnIndex": 0,
+                            "endColumnIndex": num_cols
+                        },
+                        "cell": {
+                            "userEnteredFormat": {
+                                "textFormat": {
+                                    "foregroundColor": {"red": 1.0, "green": 1.0, "blue": 1.0},
+                                    "bold": True,
+                                    "fontFamily": "Merriweather",
+                                    "fontSize": 11
+                                },
+                                "backgroundColor": {
+                                    "red": 0.2, "green": 0.4, "blue": 0.6
+                                },
+                                "horizontalAlignment": "CENTER",
+                                "verticalAlignment": "MIDDLE"
+                            }
+                        },
+                        "fields": "userEnteredFormat"
+                    }
+                },
+                # 3. Freeze header row
+                {
+                    "updateSheetProperties": {
+                        "properties": {
+                            "sheetId": sheet_id,
+                            "gridProperties": {
+                                "frozenRowCount": 1
+                            }
+                        },
+                        "fields": "gridProperties.frozenRowCount"
+                    }
+                },
+                # 4. Auto-resize columns to fit content
+                {
+                    "autoResizeDimensions": {
+                        "dimensions": {
+                            "sheetId": sheet_id,
+                            "dimension": "COLUMNS",
+                            "startIndex": 0,
+                            "endIndex": num_cols
+                        }
+                    }
+                }
+            ]
+            
+            # Execute formatting
+            service.spreadsheets().batchUpdate(
+                spreadsheetId=spreadsheet_id, 
+                body={"requests": requests}
+            ).execute()
+            
+    except Exception as fmt_err:
+        if progress_callback:
+            progress_callback(f"Formatting applied (some features may vary): {fmt_err}")
     
     url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
     
     if progress_callback:
-        progress_callback(f"✅ Exported {len(data)} rows to Google Sheets!")
+        progress_callback(f"✅ Exported {len(data)} rows with premium formatting!")
     
     return url
 

@@ -1,0 +1,63 @@
+name: OLX Daily Scraper
+
+on:
+  schedule:
+    # 4:00 AM UTC = 9:00 AM Pakistan Standard Time (PKT)
+    - cron: '0 4 * * *'
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+
+jobs:
+  scrape-and-update:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install Google Chrome
+        run: |
+          wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Create Auth Config Files
+        # We write the secrets to the local files expected by the script
+        run: |
+          mkdir -p config
+          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" > config/client_secret.json
+          echo "${{ secrets.GOOGLE_TOKEN_JSON }}" > config/google_token.json
+
+      - name: Run Scraper
+        env:
+          # Configuration
+          MAX_PAGES: 10
+          MAX_LISTINGS: 100
+          LOCATIONS: "all"
+          
+          # Secrets
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          # OLX_AUTH_COOKIES not needed (Guest Mode)
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          CI: true
+        run: |
+          python run_batch.py
+
+      - name: Upload Artifacts (Optional)
+        if: always() # Upload even if it fails
+        uses: actions/upload-artifact@v3
+        with:
+          name: scraper-output
+          path: output/
+          retention-days: 7

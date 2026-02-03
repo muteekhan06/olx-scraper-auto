@@ -7,7 +7,6 @@ import json
 import random
 import re
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Callable, Dict, List, Optional, Set
 
 from bs4 import BeautifulSoup
@@ -18,7 +17,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException, WebDriverException
 
 from app.config import SCRAPER_CONFIG, OUTPUT_CONFIG
-from app.driver import build_driver, get_thread_driver, cleanup_all_drivers
+from app.driver import build_driver
 
 
 def sleep_jitter(min_s: float = None, max_s: float = None) -> None:
@@ -400,12 +399,28 @@ def extract_detail(driver: webdriver.Chrome, url: str, max_retries: int = 3) -> 
         '[aria-label="Location"]', "div.f7d5e47e"
     ])
     
+    
     # Seller info
     seller_name = extract_text(soup, ['[data-testid="seller-name"]', '[data-aut-id="profileCard"] h4'])
     if seller_name:
         d["Seller Name"] = seller_name
     
-    d["Seller Since"] = extract_text(soup, [".seller-since", '[data-aut-id="sellerSince"]']) or ""
+    # Seller Since - More robust extraction
+    seller_since = extract_text(soup, [
+        ".seller-since", 
+        '[data-aut-id="sub-title"]', 
+        '[aria-label="Member since"]', 
+        'div._053301d8'
+    ])
+    
+    if not seller_since:
+        # Try to find "Member since" text globally in the profile card
+        card_text = extract_text(soup, ['[data-aut-id="profileCard"]', 'div[class*="profile-card"]'])
+        m = re.search(r"Member since\s+([A-Za-z]+\s+\d{4})", card_text, re.I)
+        if m:
+            seller_since = m.group(1)
+            
+    d["Seller Since"] = seller_since or ""
     
     # Ad ID
     d["Ad ID"] = d.get("Ad ID") or extract_ad_id(soup)
@@ -442,102 +457,155 @@ def scrape_listings(
     max_pages: int = None,
     max_listings: int = None,
     progress_callback: Optional[Callable] = None,
+    selected_locations: Optional[List[str]] = None,
 ) -> List[Dict[str, str]]:
     """
-    Main scraping function - collects listings from Lahore.
+    Main scraping function - collects listings from multiple Lahore locations.
     
     Args:
-        max_pages: Maximum pages to scrape
-        max_listings: Maximum total listings to collect
+        max_pages: Maximum pages to scrape per location
+        max_listings: Maximum total listings to collect per location
         progress_callback: Optional callback for progress updates
+        selected_locations: List of location keys to scrape (e.g., ['johar_town', 'model_town'])
+                           If None, scrapes from all enabled locations
         
     Returns:
-        List of dictionaries with listing data
+        List of dictionaries with listing data from all locations
     """
     max_pages = max_pages or SCRAPER_CONFIG.DEFAULT_MAX_PAGES
-    max_listings = max_listings or SCRAPER_CONFIG.DEFAULT_MAX_LISTINGS
+    max_listings_per_location = SCRAPER_CONFIG.LISTINGS_PER_LOCATION
     
-    master_driver = build_driver(headless=True)
-    all_basics: List[Dict[str, str]] = []
+    # Determine which locations to scrape
+    if selected_locations is None:
+        # Scrape all enabled locations
+        locations_to_scrape = {
+            key: loc for key, loc in SCRAPER_CONFIG.LOCATIONS.items() 
+            if loc.get("enabled", True)
+        }
+    else:
+        # Scrape only selected locations
+        locations_to_scrape = {
+            key: SCRAPER_CONFIG.LOCATIONS[key] 
+            for key in selected_locations 
+            if key in SCRAPER_CONFIG.LOCATIONS
+        }
     
-    try:
-        # Phase 1: Collect listing links
-        for page in range(1, max_pages + 1):
-            url = SCRAPER_CONFIG.BASE_URL if page == 1 else f"{SCRAPER_CONFIG.BASE_URL}?page={page}"
-            
-            if progress_callback:
-                progress_callback(f"Scraping page {page}/{max_pages}...")
-            
-            basics = scrape_list_page(master_driver, url, max_items=24, progress_callback=progress_callback)
-            
-            if not basics:
-                if progress_callback:
-                    progress_callback(f"No items on page {page}, stopping.")
-                break
-            
-            all_basics.extend(basics)
-            
-            if len(all_basics) >= max_listings:
-                all_basics = all_basics[:max_listings]
-                break
-            
-            sleep_jitter(SCRAPER_CONFIG.MIN_REQUEST_DELAY, SCRAPER_CONFIG.MAX_REQUEST_DELAY)
-    
-    finally:
-        try:
-            master_driver.quit()
-        except Exception:
-            pass
-    
-    if not all_basics:
+    if not locations_to_scrape:
         if progress_callback:
-            progress_callback("No listings found.")
+            progress_callback("No locations selected for scraping.")
         return []
     
     if progress_callback:
-        progress_callback(f"Collected {len(all_basics)} listings. Fetching details...")
+        location_names = [loc["name"] for loc in locations_to_scrape.values()]
+        progress_callback(f"Starting scrape for {len(locations_to_scrape)} location(s): {', '.join(location_names)}")
     
-    # Phase 2: Scrape details concurrently
-    results: List[Dict[str, str]] = []
+    all_results: List[Dict[str, str]] = []
     
-    def task(item: Dict[str, str], idx: int) -> Dict[str, str]:
-        drv = get_thread_driver(headless=True)
+    # Scrape each location sequentially for safety and reliability
+    def scrape_single_location(location_key: str, location_info: dict) -> List[Dict[str, str]]:
+        location_name = location_info["name"]
+        base_url = location_info["url"]
+        
+        if progress_callback:
+            progress_callback(f"📍 {location_name}: Starting scrape (target: {max_listings_per_location} listings)...")
+        
+        master_driver = build_driver(headless=True)
+        all_basics: List[Dict[str, str]] = []
+        
         try:
-            detail = extract_detail(drv, item["Link"])
-        except Exception as e:
-            detail = {"Link": item.get("Link", ""), "error": str(e)}
-        
-        merged = dict(detail)
-        for k, v in item.items():
-            if k not in merged or (not merged[k] and v):
-                merged[k] = v or ""
-        
-        # Polite delay
-        if idx % SCRAPER_CONFIG.LONG_PAUSE_FREQUENCY == 0:
-            sleep_jitter(SCRAPER_CONFIG.LONG_PAUSE_MIN, SCRAPER_CONFIG.LONG_PAUSE_MAX)
-        else:
-            sleep_jitter(SCRAPER_CONFIG.MIN_REQUEST_DELAY, SCRAPER_CONFIG.MAX_REQUEST_DELAY)
-        
-        return merged
-    
-    with ThreadPoolExecutor(max_workers=SCRAPER_CONFIG.DETAIL_WORKERS) as executor:
-        futures = {executor.submit(task, item, i): i for i, item in enumerate(all_basics)}
-        
-        for i, future in enumerate(as_completed(futures), 1):
-            try:
-                result = future.result()
-                results.append(result)
-            except Exception as e:
+            # Phase 1: Collect listing links for this location
+            for page in range(1, max_pages + 1):
+                url = base_url if page == 1 else f"{base_url}?page={page}"
+                
                 if progress_callback:
-                    progress_callback(f"Error processing listing: {e}")
-            
-            if progress_callback and i % 5 == 0:
-                progress_callback(f"Processed {i}/{len(all_basics)} listings...")
+                    progress_callback(f"📍 {location_name}: Page {page}/{max_pages}...")
+                
+                basics = scrape_list_page(master_driver, url, max_items=24, progress_callback=progress_callback)
+                
+                if not basics:
+                    if progress_callback:
+                        progress_callback(f"📍 {location_name}: No items on page {page}, stopping.")
+                    break
+                
+                all_basics.extend(basics)
+                
+                if len(all_basics) >= max_listings_per_location:
+                    all_basics = all_basics[:max_listings_per_location]
+                    if progress_callback:
+                        progress_callback(f"📍 {location_name}: Reached target of {max_listings_per_location} listings.")
+                    break
+                
+                sleep_jitter(SCRAPER_CONFIG.MIN_REQUEST_DELAY, SCRAPER_CONFIG.MAX_REQUEST_DELAY)
+        
+        finally:
+            try:
+                master_driver.quit()
+            except Exception:
+                pass
+        
+        if not all_basics:
+            if progress_callback:
+                progress_callback(f"📍 {location_name}: No listings found.")
+            return []
+        
+        if progress_callback:
+            progress_callback(f"📍 {location_name}: Collected {len(all_basics)} listings. Fetching details...")
+        
+        # Phase 2: Scrape details sequentially for this location (safe, no conflicts)
+        location_results: List[Dict[str, str]] = []
+        detail_driver = build_driver(headless=True)
+        
+        try:
+            for idx, item in enumerate(all_basics):
+                try:
+                    detail = extract_detail(detail_driver, item["Link"])
+                except Exception as e:
+                    detail = {"Link": item.get("Link", ""), "error": str(e)}
+                    if progress_callback:
+                        progress_callback(f"📍 {location_name}: Error on listing {idx+1}: {e}")
+                
+                merged = dict(detail)
+                for k, v in item.items():
+                    if k not in merged or (not merged[k] and v):
+                        merged[k] = v or ""
+                
+                # Add location metadata
+                merged["Scraped_Location"] = location_name
+                merged["Location_Key"] = location_key
+                
+                location_results.append(merged)
+                
+                # Progress update
+                if progress_callback and (idx + 1) % 5 == 0:
+                    progress_callback(f"📍 {location_name}: Processed {idx + 1}/{len(all_basics)} listings...")
+                
+                # Polite delay
+                if (idx + 1) % SCRAPER_CONFIG.LONG_PAUSE_FREQUENCY == 0:
+                    sleep_jitter(SCRAPER_CONFIG.LONG_PAUSE_MIN, SCRAPER_CONFIG.LONG_PAUSE_MAX)
+                else:
+                    sleep_jitter(SCRAPER_CONFIG.MIN_REQUEST_DELAY, SCRAPER_CONFIG.MAX_REQUEST_DELAY)
+        finally:
+            try:
+                detail_driver.quit()
+            except Exception:
+                pass
+        
+        if progress_callback:
+            progress_callback(f"✅ {location_name}: Completed! {len(location_results)} listings scraped.")
+        
+        return location_results
     
-    # Cleanup drivers
-    cleanup_all_drivers()
+    # Scrape locations sequentially (safe, no WebDriver conflicts)
+    for location_key, location_info in locations_to_scrape.items():
+        try:
+            location_results = scrape_single_location(location_key, location_info)
+            all_results.extend(location_results)
+        except Exception as e:
+            location_name = location_info["name"]
+            if progress_callback:
+                progress_callback(f"❌ {location_name}: Error - {e}")
     
     if progress_callback:
-        progress_callback(f"Completed! {len(results)} listings scraped.")
+        progress_callback(f"🎉 All locations complete! Total: {len(all_results)} listings from {len(locations_to_scrape)} location(s).")
     
-    return results
+    return all_results
