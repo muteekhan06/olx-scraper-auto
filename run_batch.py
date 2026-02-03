@@ -87,8 +87,18 @@ def main():
         
         # Parse locations
         selected_locations = None
-        if LOCATIONS.lower() != "all":
+        if LOCATIONS.lower() == "lahore":
+            from app.config import LOCATIONS_LAHORE
+            selected_locations = list(LOCATIONS_LAHORE.keys())
+            log("📍 Mode: Lahore City Only")
+        elif LOCATIONS.lower() == "karachi":
+            from app.config import LOCATIONS_KARACHI
+            selected_locations = list(LOCATIONS_KARACHI.keys())
+            log("📍 Mode: Karachi City Only")
+        elif LOCATIONS.lower() != "all":
             selected_locations = [x.strip() for x in LOCATIONS.split(",") if x.strip()]
+        else:
+            log("📍 Mode: All Locations (Lahore + Karachi)")
         
         # 1. Scrape Listings
         log("Phase 1: Discovery (Scraping Listings & Details)")

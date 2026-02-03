@@ -65,7 +65,8 @@ class ScraperConfig:
 
 
 # Define available locations for scraping
-LOCATIONS_CONFIG = {
+# Define available locations for scraping
+LOCATIONS_LAHORE = {
     "johar_town": {
         "name": "Johar Town",
         "url": "https://www.olx.com.pk/johar-town_g5000042/cars_c84",
@@ -87,11 +88,87 @@ LOCATIONS_CONFIG = {
         "enabled": True,
     },
     "dha_defence": {
-        "name": "DHA Defence",
+        "name": "DHA Defence (Lahore)",
         "url": "https://www.olx.com.pk/dha-defence_g9/cars_c84",
         "enabled": True,
     },
 }
+
+LOCATIONS_KARACHI = {
+    "gulshan_iqbal": {
+        "name": "Gulshan-e-Iqbal Town",
+        "url": "https://www.olx.com.pk/gulshan-e-iqbal-town_g6858/vehicles_c5",
+        "enabled": True,
+    },
+    "gulistan_jauhar": {
+        "name": "Gulistan-e-Jauhar",
+        "url": "https://www.olx.com.pk/gulistan-e-jauhar_g232/vehicles_c5",
+        "enabled": True,
+    },
+    "fb_area": {
+        "name": "Federal B Area",
+        "url": "https://www.olx.com.pk/federal-b-area_g5001513/vehicles_c5",
+        "enabled": True,
+    },
+    "north_nazimabad": {
+        "name": "North Nazimabad",
+        "url": "https://www.olx.com.pk/north-nazimabad_g5001585/vehicles_c5",
+        "enabled": True,
+    },
+    "nazimabad": {
+        "name": "Nazimabad",
+        "url": "https://www.olx.com.pk/nazimabad_g5000215/vehicles_c5",
+        "enabled": True,
+    },
+    "naya_nazimabad": {
+        "name": "Naya Nazimabad",
+        "url": "https://www.olx.com.pk/naya-nazimabad_g5001578/vehicles_c5",
+        "enabled": True,
+    },
+    "north_karachi": {
+        "name": "North Karachi",
+        "url": "https://www.olx.com.pk/north-karachi_g5001584/vehicles_c5",
+        "enabled": True,
+    },
+    "new_karachi": {
+        "name": "New Karachi",
+        "url": "https://www.olx.com.pk/new-karachi_g5001580/vehicles_c5",
+        "enabled": True,
+    },
+    "saddar_town": {
+        "name": "Saddar Town",
+        "url": "https://www.olx.com.pk/saddar-town_g5000238/vehicles_c5",
+        "enabled": True,
+    },
+    "dha_defence_karachi": {
+        "name": "DHA Defence (Karachi)",
+        "url": "https://www.olx.com.pk/dha-defence_g213/vehicles_c5",
+        "enabled": True,
+    },
+    "clifton": {
+        "name": "Clifton",
+        "url": "https://www.olx.com.pk/clifton_g5000262/vehicles_c5",
+        "enabled": True,
+    },
+    "buffer_zone_north": {
+        "name": "North Karachi - Buffer Zone",
+        "url": "https://www.olx.com.pk/north-karachi-buffer-zone_g1000000000000401/vehicles_c5",
+        "enabled": True,
+    },
+    "buffer_zone_2": {
+        "name": "Buffer Zone 2",
+        "url": "https://www.olx.com.pk/buffer-zone-2_g5000107/vehicles_c5",
+        "enabled": True,
+    },
+    "khalid_bin_walid": {
+        "name": "Khalid Bin Walid Road",
+        "url": "https://www.olx.com.pk/khalid-bin-walid-road_g5001552/vehicles_c5",
+        "enabled": True,
+    },
+}
+
+# Combine all locations
+LOCATIONS_CONFIG = {**LOCATIONS_LAHORE, **LOCATIONS_KARACHI}
 
 
 @dataclass(frozen=True)

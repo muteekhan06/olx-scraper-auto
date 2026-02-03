@@ -67,6 +67,7 @@ To get a "Ding!" on your phone when new leads arrive, we use Discord. It is fast
 | `GOOGLE_CLIENT_SECRET` | Content of `config/client_secret.json`. |
 | `GOOGLE_TOKEN_JSON` | Content of `config/google_token.json`. |
 | `DISCORD_WEBHOOK_URL` | The URL you copied in Part 2. |
+| `KARACHI_SHEET_ID` | **(NEW)** The ID of your Karachi Google Sheet. |
 
 ---
 

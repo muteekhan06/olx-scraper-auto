@@ -1,14 +1,14 @@
-name: OLX Daily Scraper
+name: OLX Karachi Daily Scraper
 
 on:
   schedule:
-    # 4:00 AM UTC = 9:00 AM Pakistan Standard Time (PKT)
-    - cron: '0 4 * * *'
-  # Allow manual trigger from GitHub UI
+    # 5:00 AM UTC = 10:00 AM Pakistan Time (Separated by 1 hour from Lahore job)
+    - cron: '0 5 * * *'
+  # Allow manual trigger
   workflow_dispatch:
 
 jobs:
-  scrape-and-update:
+  scrape-and-update-karachi:
     runs-on: ubuntu-latest
     
     steps:
@@ -33,31 +33,30 @@ jobs:
           pip install -r requirements.txt
       
       - name: Create Auth Config Files
-        # Use single quotes to prevent bash from stripping the double quotes inside the JSON
+        # Use single quotes to prevent bash from stripping quotes
         run: |
           mkdir -p config
           echo '${{ secrets.GOOGLE_CLIENT_SECRET }}' > config/client_secret.json
           echo '${{ secrets.GOOGLE_TOKEN_JSON }}' > config/google_token.json
 
-      - name: Run Scraper
+      - name: Run Scraper (Karachi)
         env:
-          # Configuration: Smart Daily Batch (Freshest Data Only)
+          # Configuration: Karachi Specific
           MAX_PAGES: 3
           MAX_LISTINGS: 30
-          LOCATIONS: "lahore"
+          LOCATIONS: "karachi"
           
-          # Secrets
-          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
-          # OLX_AUTH_COOKIES not needed (Guest Mode)
+          # Secrets - Mapping KARACHI_SHEET_ID secret to GOOGLE_SHEET_ID env var
+          GOOGLE_SHEET_ID: ${{ secrets.KARACHI_SHEET_ID }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           CI: true
         run: |
           python run_batch.py
 
       - name: Upload Artifacts (Optional)
-        if: always() # Upload even if it fails
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: scraper-output
+          name: scraper-output-karachi
           path: output/
           retention-days: 7
