@@ -14,9 +14,10 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Import scraper and exporter functions
-from app.scraper import scrape_listings, fetch_contacts
+from app.scraper import scrape_listings
+from app.contact_fetcher import fetch_contacts
 from app.exporter import export_to_tsv, export_to_json, ensure_dir
-from app.sheets import is_google_sheets_configured, export_to_google_sheets
+from app.google_sheets import is_google_sheets_configured, export_to_google_sheets
 from app.config import OUTPUT_CONFIG
 
 def log(msg):
