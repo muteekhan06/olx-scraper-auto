@@ -351,11 +351,19 @@ def extract_detail(driver: webdriver.Chrome, url: str, max_retries: int = 3) -> 
             raise
     
     try:
+        # Wait for the TITLE to appear - this confirms meaningful content is loaded
+        # Waiting just for 'body' is too risky on fast connections
         WebDriverWait(driver, SCRAPER_CONFIG.DETAIL_WAIT).until(
-            EC.presence_of_element_located((By.TAG_NAME, "body"))
+            EC.presence_of_element_located((By.TAG_NAME, "h1"))
         )
     except TimeoutException:
-        return d  # Return minimal data on timeout
+        # Try one more fallback before giving up
+        try:
+            WebDriverWait(driver, 2).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "[aria-label='Price']"))
+            )
+        except TimeoutException:
+            return d  # Return minimal data on timeout
     
     sleep_jitter(0.3, 0.6)
     scroll_page(driver, steps=2)

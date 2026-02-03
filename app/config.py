@@ -34,24 +34,25 @@ class ScraperConfig:
     # Multi-location configuration for Lahore areas
     LOCATIONS: dict = None  # Will be set below
     
-    # Page load timeouts (seconds) - optimized for speed
-    PAGE_WAIT: int = 4
-    DETAIL_WAIT: int = 2
+    # Page load timeouts (seconds) - optimized for reliability
+    PAGE_WAIT: int = 6
+    DETAIL_WAIT: int = 4
     
-    # Optimized delays (faster but still human-like)
-    MIN_JITTER: float = 0.01
-    MAX_JITTER: float = 0.1
-    SCROLL_PAUSE: float = 0.05
+    # Optimized delays (Safe limits to prevent empty data)
+    MIN_JITTER: float = 0.5
+    MAX_JITTER: float = 1.0
+    SCROLL_PAUSE: float = 0.3
     
-    # Between-request delays - fast but varied to look human
-    MIN_REQUEST_DELAY: float = 0.05
-    MAX_REQUEST_DELAY: float = 0.2
-    LONG_PAUSE_MIN: float = 1.0
-    LONG_PAUSE_MAX: float = 2.0
-    LONG_PAUSE_FREQUENCY: int = 100  # Take a break less often (every 100 requests)
+    # Between-request delays - Crucial for API success
+    # 0.05s was too fast and caused API blocks/Empty fields
+    MIN_REQUEST_DELAY: float = 1.0
+    MAX_REQUEST_DELAY: float = 2.0
+    LONG_PAUSE_MIN: float = 3.0
+    LONG_PAUSE_MAX: float = 5.0
+    LONG_PAUSE_FREQUENCY: int = 30
     
-    # Concurrency - more workers = faster (increased for parallel processing)
-    DETAIL_WORKERS: int = 8  # Parallel detail page fetchers
+    # Concurrency
+    DETAIL_WORKERS: int = 6
     
     # Login timeout for contact fetching
     LOGIN_TIMEOUT: int = 60
