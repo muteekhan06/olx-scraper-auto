@@ -35,33 +35,33 @@ class ScraperConfig:
     LOCATIONS: dict = None  # Will be set below
     
     # Page load timeouts (seconds) - optimized for speed
-    PAGE_WAIT: int = 7
-    DETAIL_WAIT: int = 5
+    PAGE_WAIT: int = 5
+    DETAIL_WAIT: int = 3
     
     # Optimized delays (faster but still human-like)
-    MIN_JITTER: float = 0.1
-    MAX_JITTER: float = 0.3
-    SCROLL_PAUSE: float = 0.2
+    MIN_JITTER: float = 0.05
+    MAX_JITTER: float = 0.15
+    SCROLL_PAUSE: float = 0.1
     
     # Between-request delays - fast but varied to look human
-    MIN_REQUEST_DELAY: float = 0.2
-    MAX_REQUEST_DELAY: float = 0.5
-    LONG_PAUSE_MIN: float = 1.0
-    LONG_PAUSE_MAX: float = 1.5
-    LONG_PAUSE_FREQUENCY: int = 15  # Every N requests take longer pause
+    MIN_REQUEST_DELAY: float = 0.1
+    MAX_REQUEST_DELAY: float = 0.4
+    LONG_PAUSE_MIN: float = 2.0
+    LONG_PAUSE_MAX: float = 4.0
+    LONG_PAUSE_FREQUENCY: int = 50  # Take a break less often (every 50 requests)
     
     # Concurrency - more workers = faster (increased for parallel processing)
     DETAIL_WORKERS: int = 6  # Parallel detail page fetchers
     
     # Login timeout for contact fetching
-    LOGIN_TIMEOUT: int = 240
+    LOGIN_TIMEOUT: int = 120
     
     # Default scraping limits
-    DEFAULT_MAX_PAGES: int = 5
-    DEFAULT_MAX_LISTINGS: int = 50
+    DEFAULT_MAX_PAGES: int = 3
+    DEFAULT_MAX_LISTINGS: int = 30
     
-    # Per-location listing limit (50 from each area)
-    LISTINGS_PER_LOCATION: int = 50
+    # Per-location listing limit
+    LISTINGS_PER_LOCATION: int = 30
 
 
 # Define available locations for scraping

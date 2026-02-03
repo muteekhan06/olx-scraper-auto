@@ -41,9 +41,9 @@ jobs:
 
       - name: Run Scraper
         env:
-          # Configuration
-          MAX_PAGES: 10
-          MAX_LISTINGS: 100
+          # Configuration: Smart Daily Batch (Freshest Data Only)
+          MAX_PAGES: 3
+          MAX_LISTINGS: 30
           LOCATIONS: "all"
           
           # Secrets
