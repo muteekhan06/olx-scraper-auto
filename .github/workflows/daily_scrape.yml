@@ -33,11 +33,11 @@ jobs:
           pip install -r requirements.txt
       
       - name: Create Auth Config Files
-        # We write the secrets to the local files expected by the script
+        # Use single quotes to prevent bash from stripping the double quotes inside the JSON
         run: |
           mkdir -p config
-          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" > config/client_secret.json
-          echo "${{ secrets.GOOGLE_TOKEN_JSON }}" > config/google_token.json
+          echo '${{ secrets.GOOGLE_CLIENT_SECRET }}' > config/client_secret.json
+          echo '${{ secrets.GOOGLE_TOKEN_JSON }}' > config/google_token.json
 
       - name: Run Scraper
         env:
