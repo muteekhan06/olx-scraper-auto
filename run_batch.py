@@ -23,7 +23,7 @@ from app.config import OUTPUT_CONFIG
 def log(msg):
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", flush=True)
 
-def send_notification(stats, error=None):
+def send_notification(status_type, stats=None, error=None):
     """Send a premium notification to Discord."""
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
     if not webhook_url:
@@ -31,14 +31,21 @@ def send_notification(stats, error=None):
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    if error:
+    if status_type == "start":
+        color = 16776960 # Yellow
+        title = "⏳ OLX Scraper Started"
+        # stats might be just the location string here if we pass it carefully
+        locs = stats.get("locations", "All") if stats else "Unknown"
+        desc = f"Job initialized for locations: **{locs}**"
+    elif status_type == "success":
+        color = 65280  # Green
+        title = "🚀 OLX Scraper Success"
+        count = stats['count'] if stats else 0
+        desc = f"**{count}** new leads added to your sheet!"
+    else: # error
         color = 16711680  # Red
         title = "❌ OLX Scraper Failed"
         desc = f"**Error:** {error}"
-    else:
-        color = 65280  # Green
-        title = "🚀 OLX Scraper Success"
-        desc = f"**{stats['count']}** new leads added to your sheet!"
 
     # Build the payload
     payload = {
@@ -48,21 +55,26 @@ def send_notification(stats, error=None):
             "color": color,
             "fields": [
                 {"name": "📅 Date", "value": timestamp, "inline": True},
-                {"name": "📍 Locations", "value": stats.get("locations", "All"), "inline": True},
             ],
             "footer": {"text": "OLXify Automation • Free Cloud Runner"}
         }]
     }
     
-    # Add Sheet Link if available
-    if stats.get("sheet_url"):
+    # Add Location field if available
+    if stats and stats.get("locations"):
+         payload["embeds"][0]["fields"].append(
+             {"name": "📍 Locations", "value": stats.get("locations"), "inline": True}
+         )
+    
+    # Add Sheet Link if available (only for success)
+    if status_type == "success" and stats and stats.get("sheet_url"):
         payload["embeds"][0]["fields"].append(
             {"name": "📊 Google Sheet", "value": f"[Click to View]({stats['sheet_url']})", "inline": False}
         )
 
     try:
         requests.post(webhook_url, json=payload)
-        log("🔔 Notification sent!")
+        log(f"🔔 {status_type.capitalize()} notification sent!")
     except Exception as e:
         log(f"⚠️ Failed to send notification: {e}")
 
@@ -81,6 +93,9 @@ def main():
         "locations": LOCATIONS,
         "sheet_url": None
     }
+    
+    # Send Start Notification
+    send_notification("start", stats)
     
     try:
         log(f"Starting batch job...")
@@ -111,7 +126,7 @@ def main():
         
         if not listings:
             log("❌ No listings found. Exiting.")
-            send_notification(stats, error="No listings found on OLX.")
+            send_notification("error", stats, error="No listings found on OLX.")
             return
         
         stats["count"] = len(listings)
@@ -144,12 +159,12 @@ def main():
                 log(f"🎉 Success! Sheet updated: {url}")
         
         # Send Success Notification
-        send_notification(stats)
+        send_notification("success", stats)
         log("✅ Batch Job Complete.")
 
     except Exception as e:
         log(f"❌ Critical Error: {e}")
-        send_notification(stats, error=str(e))
+        send_notification("error", stats, error=str(e))
         sys.exit(1)
 
 if __name__ == "__main__":
