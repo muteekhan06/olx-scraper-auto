@@ -13,6 +13,15 @@ from datetime import datetime
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+# Import scraper and exporter functions
+from app.scraper import scrape_listings, fetch_contacts
+from app.exporter import export_to_tsv, export_to_json, ensure_dir
+from app.sheets import is_google_sheets_configured, export_to_google_sheets
+from app.config import OUTPUT_CONFIG
+
+def log(msg):
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", flush=True)
+
 def send_notification(stats, error=None):
     """Send a premium notification to Discord."""
     webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
