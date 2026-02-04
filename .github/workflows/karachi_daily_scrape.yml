@@ -2,8 +2,9 @@ name: OLX Karachi Daily Scraper
 
 on:
   schedule:
-    # 4:00 AM UTC = 9:00 AM Pakistan Time (Same as Lahore)
-    - cron: '0 4 * * *'
+    # 4:37 AM UTC = 9:37 AM Pakistan Time
+    # Minute 37 is chosen to avoid congestion and separate it from the Lahore job
+    - cron: '37 4 * * *'
   # Allow manual trigger
   workflow_dispatch:
 

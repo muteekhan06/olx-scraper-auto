@@ -2,8 +2,9 @@ name: OLX Daily Scraper
 
 on:
   schedule:
-    # 4:00 AM UTC = 9:00 AM Pakistan Standard Time (PKT)
-    - cron: '0 4 * * *'
+    # 4:23 AM UTC = 9:23 AM Pakistan Standard Time (PKT)
+    # Minute 23 is chosen to avoid "Top of the Hour" cloud congestion
+    - cron: '23 4 * * *'
   # Allow manual trigger from GitHub UI
   workflow_dispatch:
 
