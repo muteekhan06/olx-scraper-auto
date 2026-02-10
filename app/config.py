@@ -34,22 +34,21 @@ class ScraperConfig:
     # Multi-location configuration for Lahore areas
     LOCATIONS: dict = None  # Will be set below
     
-    # Page load timeouts (seconds) - optimized for reliability
-    PAGE_WAIT: int = 6
-    DETAIL_WAIT: int = 4
+    # Page load timeouts (seconds) - balanced for speed + reliability
+    PAGE_WAIT: int = 5
+    DETAIL_WAIT: int = 3
     
-    # Optimized delays (Safe limits to prevent empty data)
-    MIN_JITTER: float = 0.5
-    MAX_JITTER: float = 1.0
-    SCROLL_PAUSE: float = 0.3
+    # Delays - tuned for reliable data capture
+    MIN_JITTER: float = 0.3
+    MAX_JITTER: float = 0.7
+    SCROLL_PAUSE: float = 0.2
     
-    # Between-request delays - Crucial for API success
-    # 0.05s was too fast and caused API blocks/Empty fields
-    MIN_REQUEST_DELAY: float = 1.0
-    MAX_REQUEST_DELAY: float = 2.0
-    LONG_PAUSE_MIN: float = 3.0
-    LONG_PAUSE_MAX: float = 5.0
-    LONG_PAUSE_FREQUENCY: int = 30
+    # Between-request delays - safe but efficient
+    MIN_REQUEST_DELAY: float = 0.5
+    MAX_REQUEST_DELAY: float = 1.2
+    LONG_PAUSE_MIN: float = 2.0
+    LONG_PAUSE_MAX: float = 3.5
+    LONG_PAUSE_FREQUENCY: int = 40
     
     # Concurrency
     DETAIL_WORKERS: int = 6
@@ -58,11 +57,11 @@ class ScraperConfig:
     LOGIN_TIMEOUT: int = 60
     
     # Default scraping limits
-    DEFAULT_MAX_PAGES: int = 3
-    DEFAULT_MAX_LISTINGS: int = 30
+    DEFAULT_MAX_PAGES: int = 2
+    DEFAULT_MAX_LISTINGS: int = 15
     
     # Per-location listing limit
-    LISTINGS_PER_LOCATION: int = 30
+    LISTINGS_PER_LOCATION: int = 15
 
 
 # Define available locations for scraping
@@ -98,72 +97,72 @@ LOCATIONS_LAHORE = {
 LOCATIONS_KARACHI = {
     "gulshan_iqbal": {
         "name": "Gulshan-e-Iqbal Town",
-        "url": "https://www.olx.com.pk/gulshan-e-iqbal-town_g6858/vehicles_c5",
+        "url": "https://www.olx.com.pk/gulshan-e-iqbal-town_g6858/cars_c84",
         "enabled": True,
     },
     "gulistan_jauhar": {
         "name": "Gulistan-e-Jauhar",
-        "url": "https://www.olx.com.pk/gulistan-e-jauhar_g232/vehicles_c5",
+        "url": "https://www.olx.com.pk/gulistan-e-jauhar_g232/cars_c84",
         "enabled": True,
     },
     "fb_area": {
         "name": "Federal B Area",
-        "url": "https://www.olx.com.pk/federal-b-area_g5001513/vehicles_c5",
+        "url": "https://www.olx.com.pk/federal-b-area_g5001513/cars_c84",
         "enabled": True,
     },
     "north_nazimabad": {
         "name": "North Nazimabad",
-        "url": "https://www.olx.com.pk/north-nazimabad_g5001585/vehicles_c5",
+        "url": "https://www.olx.com.pk/north-nazimabad_g5001585/cars_c84",
         "enabled": True,
     },
     "nazimabad": {
         "name": "Nazimabad",
-        "url": "https://www.olx.com.pk/nazimabad_g5000215/vehicles_c5",
+        "url": "https://www.olx.com.pk/nazimabad_g5000215/cars_c84",
         "enabled": True,
     },
     "naya_nazimabad": {
         "name": "Naya Nazimabad",
-        "url": "https://www.olx.com.pk/naya-nazimabad_g5001578/vehicles_c5",
+        "url": "https://www.olx.com.pk/naya-nazimabad_g5001578/cars_c84",
         "enabled": True,
     },
     "north_karachi": {
         "name": "North Karachi",
-        "url": "https://www.olx.com.pk/north-karachi_g5001584/vehicles_c5",
+        "url": "https://www.olx.com.pk/north-karachi_g5001584/cars_c84",
         "enabled": True,
     },
     "new_karachi": {
         "name": "New Karachi",
-        "url": "https://www.olx.com.pk/new-karachi_g5001580/vehicles_c5",
+        "url": "https://www.olx.com.pk/new-karachi_g5001580/cars_c84",
         "enabled": True,
     },
     "saddar_town": {
         "name": "Saddar Town",
-        "url": "https://www.olx.com.pk/saddar-town_g5000238/vehicles_c5",
+        "url": "https://www.olx.com.pk/saddar-town_g5000238/cars_c84",
         "enabled": True,
     },
     "dha_defence_karachi": {
         "name": "DHA Defence (Karachi)",
-        "url": "https://www.olx.com.pk/dha-defence_g213/vehicles_c5",
+        "url": "https://www.olx.com.pk/dha-defence_g213/cars_c84",
         "enabled": True,
     },
     "clifton": {
         "name": "Clifton",
-        "url": "https://www.olx.com.pk/clifton_g5000262/vehicles_c5",
+        "url": "https://www.olx.com.pk/clifton_g5000262/cars_c84",
         "enabled": True,
     },
     "buffer_zone_north": {
         "name": "North Karachi - Buffer Zone",
-        "url": "https://www.olx.com.pk/north-karachi-buffer-zone_g1000000000000401/vehicles_c5",
+        "url": "https://www.olx.com.pk/north-karachi-buffer-zone_g1000000000000401/cars_c84",
         "enabled": True,
     },
     "buffer_zone_2": {
         "name": "Buffer Zone 2",
-        "url": "https://www.olx.com.pk/buffer-zone-2_g5000107/vehicles_c5",
+        "url": "https://www.olx.com.pk/buffer-zone-2_g5000107/cars_c84",
         "enabled": True,
     },
     "khalid_bin_walid": {
         "name": "Khalid Bin Walid Road",
-        "url": "https://www.olx.com.pk/khalid-bin-walid-road_g5001552/vehicles_c5",
+        "url": "https://www.olx.com.pk/khalid-bin-walid-road_g5001552/cars_c84",
         "enabled": True,
     },
 }

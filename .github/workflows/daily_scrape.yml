@@ -43,8 +43,8 @@ jobs:
       - name: Run Scraper
         env:
           # Configuration: Smart Daily Batch (Freshest Data Only)
-          MAX_PAGES: 3
-          MAX_LISTINGS: 30
+          MAX_PAGES: 2
+          MAX_LISTINGS: 15
           LOCATIONS: "lahore"
           
           # Secrets

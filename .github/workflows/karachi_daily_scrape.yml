@@ -43,8 +43,8 @@ jobs:
       - name: Run Scraper (Karachi)
         env:
           # Configuration: Karachi Specific
-          MAX_PAGES: 3
-          MAX_LISTINGS: 30
+          MAX_PAGES: 2
+          MAX_LISTINGS: 15
           LOCATIONS: "karachi"
           
           # Secrets - Mapping KARACHI_SHEET_ID secret to GOOGLE_SHEET_ID env var
