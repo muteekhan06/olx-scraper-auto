@@ -800,10 +800,23 @@
                         </div>
                     </label>
                 </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <button class="btn" style="background: var(--accent-green); color: white;" onclick="startCityBatch('lahore')">
+                        <span class="btn-icon">🏰</span>
+                        <span>Run Lahore</span>
+                    </button>
+                    <button class="btn" style="background: var(--accent-blue); color: white;" onclick="startCityBatch('karachi')">
+                        <span class="btn-icon">🌊</span>
+                        <span>Run Karachi</span>
+                    </button>
+                </div>
+
+                <div style="text-align: center; margin-bottom: 16px; color: var(--text-muted); font-size: 0.9rem;">— OR Custom Selection —</div>
 
                 <button class="btn btn-primary" id="startBtn" onclick="startScraper()">
                     <span class="btn-icon">🚀</span>
-                    <span>Start Scraping</span>
+                    <span>Start Custom Scraping</span>
                 </button>
             </div>
 
@@ -932,10 +945,52 @@
             return Array.from(checkboxes).map(cb => cb.value);
         }
 
+        async function startCityBatch(city) {
+            const maxPages = parseInt(document.getElementById('maxPages').value) || 2;
+            const fetchContacts = document.getElementById('fetchContacts').checked;
+            
+            if (!confirm(`Start ${city.toUpperCase()} Batch Scrape?\nThis will scrape ${maxPages} pages from ALL ${city} locations.`)) {
+                return;
+            }
+
+            const btn = document.getElementById('startBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div><span>Running ' + city + '...</span>';
+
+            try {
+                const resp = await fetch('/api/start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        max_pages: maxPages,
+                        max_listings: 15,
+                        fetch_contact_info: fetchContacts,
+                        location_group: city
+                    })
+                });
+                
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    alert(err.error || 'Failed to start scraper');
+                    resetButton();
+                    return;
+                }
+
+                startTime = Date.now();
+                startPolling();
+                startTimer();
+            } catch (e) {
+                alert('Connection error: ' + e.message);
+                resetButton();
+            }
+        }
+
         async function startScraper() {
             const maxPages = parseInt(document.getElementById('maxPages').value) || 3;
             const fetchContacts = document.getElementById('fetchContacts').checked;
             const selectedLocations = getSelectedLocations();
+            
+
 
             if (selectedLocations.length === 0) {
                 alert('Please select at least one location to scrape.');

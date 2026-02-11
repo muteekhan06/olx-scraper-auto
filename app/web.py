@@ -191,7 +191,19 @@ def start_scraper():
     max_pages = max(1, min(50, int(data.get("max_pages", 5))))
     max_listings = max(1, min(500, int(data.get("max_listings", 100))))
     fetch_contact = bool(data.get("fetch_contact_info", True))
-    selected_locations = data.get("locations", None)
+    
+    # Check for pre-defined location groups (Lahore/Karachi)
+    location_group = data.get("location_group")
+    selected_locations = None
+    
+    if location_group == "lahore":
+        from app.config import LOCATIONS_LAHORE
+        selected_locations = list(LOCATIONS_LAHORE.keys())
+    elif location_group == "karachi":
+        from app.config import LOCATIONS_KARACHI
+        selected_locations = list(LOCATIONS_KARACHI.keys())
+    else:
+        selected_locations = data.get("locations", None)
     
     # Validate locations if provided
     if selected_locations is not None:
