@@ -49,6 +49,8 @@ jobs:
           GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
           # OLX_AUTH_COOKIES not needed (Guest Mode)
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
+          WHATSAPP_API_KEY: ${{ secrets.WHATSAPP_API_KEY }}
           CI: true
         run: |
           python run_batch.py
