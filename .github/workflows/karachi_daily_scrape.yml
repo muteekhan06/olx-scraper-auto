@@ -48,6 +48,8 @@ jobs:
           # Secrets - Mapping KARACHI_SHEET_ID secret to GOOGLE_SHEET_ID env var
           GOOGLE_SHEET_ID: ${{ secrets.KARACHI_SHEET_ID }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
+          WHATSAPP_API_KEY: ${{ secrets.WHATSAPP_API_KEY }}
           CI: true
         run: |
           python run_batch.py

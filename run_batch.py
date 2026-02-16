@@ -158,8 +158,36 @@ def main():
                 stats["sheet_url"] = url
                 log(f"🎉 Success! Sheet updated: {url}")
         
-        # Send Success Notification
+        # Send Success Notification (Discord)
+        send_whatsapp_alert = None
+        try:
+            from app.whatsapp_notifier import send_whatsapp_alert
+        except ImportError:
+            pass
+
         send_notification("success", stats)
+        
+        # Send WhatsApp Notification
+        if send_whatsapp_alert:
+            # 1. Calculate stats per location
+            loc_counts = {}
+            for item in listings:
+                loc = item.get('Location', 'Unknown').split(',')[0].strip() # Get main area name
+                loc_counts[loc] = loc_counts.get(loc, 0) + 1
+            
+            # 2. Build Message
+            city_name = "Lahore" if LOCATIONS.lower() == "lahore" else ("Karachi" if LOCATIONS.lower() == "karachi" else "City")
+            msg = f"✅ *Today's {city_name} Updates:*\n"
+            
+            for loc, count in loc_counts.items():
+                msg += f"- {loc}: {count} New\n"
+            
+            msg += f"\n📊 *Total:* {len(listings)} Leads Added to Sheet."
+            
+            # 3. Send
+            log("Sending WhatsApp Notification...")
+            send_whatsapp_alert(msg)
+
         log("✅ Batch Job Complete.")
 
     except Exception as e:
