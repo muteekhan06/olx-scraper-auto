@@ -74,7 +74,16 @@ def get_google_credentials():
                 creds = None
         
         if not creds:
-            # Need fresh login via browser
+            # Check if running in CI/Headless environment
+            if os.environ.get("CI") or os.environ.get("HEADLESS"):
+                raise RuntimeError(
+                    "❌ Google Auth Token is missing or invalid!\n"
+                    "Since we are in a headless/CI environment, we cannot open a browser to login.\n"
+                    "Please update your 'GOOGLE_TOKEN_JSON' secret with a fresh, valid token."
+                )
+
+            # Need fresh login via browser (Local Machine Only)
+            print("🔄 Initiating Google Login via Browser...")
             flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
             creds = flow.run_local_server(port=0, open_browser=True)
         
