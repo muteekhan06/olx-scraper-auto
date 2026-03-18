@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OLXify Karachi Control Panel</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #111a2e;
+      --border: #243451;
+      --text: #e6edf7;
+      --muted: #9db0cf;
+      --primary: #2f81f7;
+      --danger: #f85149;
+      --ok: #2da44e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: linear-gradient(160deg, #0b1220, #0e1630);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .wrap {
+      max-width: 980px;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    h1 { margin: 0 0 8px; font-size: 1.45rem; }
+    h2 { margin: 0 0 12px; font-size: 1.05rem; }
+    p { color: var(--muted); margin-top: 0; }
+    label { display: block; margin-bottom: 8px; font-size: 0.95rem; }
+    input[type="text"], input[type="password"], input[type="number"] {
+      width: 100%;
+      background: #0d1426;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 6px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .area {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--border);
+      padding: 8px;
+      border-radius: 8px;
+      background: #0d1426;
+    }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      border: 0;
+      background: var(--primary);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button.secondary { background: #30425f; }
+    button.danger { background: var(--danger); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .msg { margin-top: 10px; font-size: 0.92rem; }
+    .msg.ok { color: #7ee787; }
+    .msg.err { color: #ff9f9a; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      padding: 8px 4px;
+      vertical-align: top;
+    }
+    .pill {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      background: #20324f;
+    }
+    @media (max-width: 700px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>OLXify Karachi Control Panel</h1>
+      <p>Manual trigger only. Lahore automation remains unchanged and is not controlled here.</p>
+    </div>
+
+    <div id="loginCard" class="card">
+      <h2>Admin Login</h2>
+      <label>Username
+        <input id="username" type="text" autocomplete="username" />
+      </label>
+      <label>Password
+        <input id="password" type="password" autocomplete="current-password" />
+      </label>
+      <div class="row">
+        <button id="loginBtn" onclick="login()">Login</button>
+      </div>
+      <div id="loginMsg" class="msg"></div>
+    </div>
+
+    <div id="panel" style="display:none;">
+      <div class="card">
+        <div class="row" style="justify-content:space-between; align-items:center;">
+          <h2 style="margin:0;">Karachi Manual Run</h2>
+          <button class="danger" onclick="logout()">Logout</button>
+        </div>
+        <p id="authMeta"></p>
+        <div class="row" style="margin-bottom:10px;">
+          <button class="secondary" onclick="selectAll(true)">Select All Areas</button>
+          <button class="secondary" onclick="selectAll(false)">Clear All</button>
+        </div>
+        <div id="areas" class="grid"></div>
+        <div class="row" style="margin-top:12px;">
+          <label style="flex:1;">Max Pages
+            <input id="maxPages" type="number" min="1" max="10" value="2" />
+          </label>
+          <label style="flex:1;">Max Listings
+            <input id="maxListings" type="number" min="1" max="50" value="15" />
+          </label>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button id="runBtn" onclick="runKarachi()">Run Karachi Workflow</button>
+        </div>
+        <div id="runMsg" class="msg"></div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between; align-items:center;">
+          <h2 style="margin:0;">Recent Karachi Workflow Runs</h2>
+          <button class="secondary" onclick="loadRuns()">Refresh</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Status</th>
+              <th>Conclusion</th>
+              <th>Title</th>
+              <th>Actor</th>
+              <th>Link</th>
+            </tr>
+          </thead>
+          <tbody id="runsTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let areaData = [];
+
+    function setMsg(id, text, ok) {
+      const el = document.getElementById(id);
+      el.textContent = text || "";
+      el.className = "msg " + (text ? (ok ? "ok" : "err") : "");
+    }
+
+    function areaSelection() {
+      return Array.from(document.querySelectorAll(".area-check:checked")).map((x) => x.value);
+    }
+
+    function selectAll(on) {
+      document.querySelectorAll(".area-check").forEach((x) => { x.checked = on; });
+    }
+
+    function renderAreas() {
+      const root = document.getElementById("areas");
+      root.innerHTML = areaData.map((a) => (
+        '<label class="area">' +
+        '<input class="area-check" type="checkbox" value="' + a.key + '" checked />' +
+        '<span>' + a.name + ' <span class="pill">' + a.key + '</span></span>' +
+        '</label>'
+      )).join("");
+    }
+
+    async function login() {
+      setMsg("loginMsg", "", false);
+      const btn = document.getElementById("loginBtn");
+      btn.disabled = true;
+      try {
+        const resp = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value
+          })
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          setMsg("loginMsg", data.error || "Login failed", false);
+          return;
+        }
+        setMsg("loginMsg", "Login successful", true);
+        await initSession();
+      } catch (err) {
+        setMsg("loginMsg", String(err), false);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function logout() {
+      await fetch("/api/logout", { method: "POST" });
+      document.getElementById("panel").style.display = "none";
+      document.getElementById("loginCard").style.display = "block";
+    }
+
+    async function initSession() {
+      const resp = await fetch("/api/me");
+      if (!resp.ok) {
+        document.getElementById("panel").style.display = "none";
+        document.getElementById("loginCard").style.display = "block";
+        return;
+      }
+      const data = await resp.json();
+      areaData = data.karachiAreas || [];
+      renderAreas();
+      document.getElementById("authMeta").textContent =
+        "Logged in as " + data.username + ". Target workflow: " + data.workflow + " (" + data.ref + ")";
+      document.getElementById("panel").style.display = "block";
+      document.getElementById("loginCard").style.display = "none";
+      await loadRuns();
+    }
+
+    async function runKarachi() {
+      setMsg("runMsg", "", false);
+      const selected = areaSelection();
+      if (!selected.length) {
+        setMsg("runMsg", "Select at least one Karachi area.", false);
+        return;
+      }
+      const btn = document.getElementById("runBtn");
+      btn.disabled = true;
+      try {
+        const resp = await fetch("/api/run-karachi", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            areas: selected,
+            maxPages: document.getElementById("maxPages").value,
+            maxListings: document.getElementById("maxListings").value
+          })
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          setMsg("runMsg", data.error || "Dispatch failed", false);
+          return;
+        }
+        setMsg("runMsg", data.message + " Areas: " + data.areas.join(", "), true);
+        await loadRuns();
+      } catch (err) {
+        setMsg("runMsg", String(err), false);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function cell(v) {
+      const td = document.createElement("td");
+      td.textContent = v || "";
+      return td;
+    }
+
+    async function loadRuns() {
+      const tbody = document.getElementById("runsTable");
+      tbody.innerHTML = "";
+      try {
+        const resp = await fetch("/api/runs");
+        const data = await resp.json();
+        if (!resp.ok) {
+          const tr = document.createElement("tr");
+          tr.appendChild(cell("Error"));
+          tr.appendChild(cell(data.error || "Unable to fetch runs"));
+          tr.appendChild(cell(""));
+          tr.appendChild(cell(""));
+          tr.appendChild(cell(""));
+          tr.appendChild(cell(""));
+          tbody.appendChild(tr);
+          return;
+        }
+
+        (data.runs || []).forEach((r) => {
+          const tr = document.createElement("tr");
+          tr.appendChild(cell(new Date(r.created_at).toLocaleString()));
+          tr.appendChild(cell(r.status));
+          tr.appendChild(cell(r.conclusion || "-"));
+          tr.appendChild(cell(r.display_title || ""));
+          tr.appendChild(cell(r.actor || ""));
+          const linkTd = document.createElement("td");
+          const a = document.createElement("a");
+          a.href = r.html_url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.textContent = "Open";
+          a.style.color = "#9cc4ff";
+          linkTd.appendChild(a);
+          tr.appendChild(linkTd);
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        const tr = document.createElement("tr");
+        tr.appendChild(cell("Error"));
+        tr.appendChild(cell(String(err)));
+        tr.appendChild(cell(""));
+        tr.appendChild(cell(""));
+        tr.appendChild(cell(""));
+        tr.appendChild(cell(""));
+        tbody.appendChild(tr);
+      }
+    }
+
+    initSession();
+  </script>
+</body>
+</html>
+

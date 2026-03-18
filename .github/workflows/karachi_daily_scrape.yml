@@ -1,12 +1,20 @@
 name: OLX Karachi Daily Scraper
 
 on:
-  schedule:
-    # 2:27 AM UTC = 7:27 AM Pakistan Time
-    # Early morning run, after Lahore finishes
-    - cron: '27 2 * * *'
-  # Allow manual trigger
   workflow_dispatch:
+    inputs:
+      areas:
+        description: "Comma-separated Karachi area keys, or 'all' for all Karachi areas"
+        required: true
+        default: "all"
+      max_pages:
+        description: "Max pages per area"
+        required: true
+        default: "2"
+      max_listings:
+        description: "Max listings per area (kept for compatibility)"
+        required: true
+        default: "15"
 
 jobs:
   scrape-and-update-karachi:
@@ -38,12 +46,54 @@ jobs:
           echo '${{ secrets.GOOGLE_CLIENT_SECRET }}' > config/client_secret.json
           echo '${{ secrets.GOOGLE_TOKEN_JSON }}' > config/google_token.json
 
+      - name: Validate Karachi Area Input
+        shell: bash
+        run: |
+          set -euo pipefail
+          RAW_AREAS="${{ github.event.inputs.areas }}"
+          RAW_AREAS="$(echo "$RAW_AREAS" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
+
+          if [ -z "$RAW_AREAS" ]; then
+            echo "areas input cannot be empty"
+            exit 1
+          fi
+
+          if [ "$RAW_AREAS" = "all" ] || [ "$RAW_AREAS" = "karachi" ]; then
+            echo "LOCATIONS=karachi" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          ALLOWED="gulshan_iqbal,gulistan_jauhar,fb_area,north_nazimabad,nazimabad,naya_nazimabad,north_karachi,new_karachi,saddar_town,dha_defence_karachi,clifton,buffer_zone_north,buffer_zone_2,khalid_bin_walid"
+          SANITIZED=""
+
+          IFS=',' read -ra TOKENS <<< "$RAW_AREAS"
+          for key in "${TOKENS[@]}"; do
+            if [ -z "$key" ]; then
+              continue
+            fi
+            if [[ ",$ALLOWED," != *",$key,"* ]]; then
+              echo "Invalid Karachi area key: $key"
+              exit 1
+            fi
+            if [ -z "$SANITIZED" ]; then
+              SANITIZED="$key"
+            else
+              SANITIZED="$SANITIZED,$key"
+            fi
+          done
+
+          if [ -z "$SANITIZED" ]; then
+            echo "No valid Karachi area keys were provided."
+            exit 1
+          fi
+
+          echo "LOCATIONS=$SANITIZED" >> "$GITHUB_ENV"
+
       - name: Run Scraper (Karachi)
         env:
           # Configuration: Karachi Specific
-          MAX_PAGES: 2
-          MAX_LISTINGS: 15
-          LOCATIONS: "karachi"
+          MAX_PAGES: ${{ github.event.inputs.max_pages }}
+          MAX_LISTINGS: ${{ github.event.inputs.max_listings }}
           
           # Secrets - Mapping KARACHI_SHEET_ID secret to GOOGLE_SHEET_ID env var
           GOOGLE_SHEET_ID: ${{ secrets.KARACHI_SHEET_ID }}

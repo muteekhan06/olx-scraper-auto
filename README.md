@@ -55,6 +55,14 @@ http://127.0.0.1:5000
 
 ---
 
+## Karachi Manual Control Dashboard (Vercel)
+
+- Karachi workflow can be run manually with area selection from a secure single-admin dashboard.
+- Lahore automation remains independent.
+- Setup guide: `VERCEL_DASHBOARD_GUIDE.md`
+
+---
+
 ## 📋 Configuration
 
 ### OLX Login (One-Time)
