@@ -4,139 +4,474 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>OLXify Karachi Control Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0b1220;
-      --card: #111a2e;
-      --border: #243451;
-      --text: #e6edf7;
-      --muted: #9db0cf;
-      --primary: #2f81f7;
-      --danger: #f85149;
-      --ok: #2da44e;
-      --input: #0d1426;
+      --bg-0: #f4f7fd;
+      --bg-1: #eaf1ff;
+      --ink: #162039;
+      --ink-soft: #5a6888;
+      --line: rgba(29, 61, 120, 0.14);
+      --line-strong: rgba(25, 66, 136, 0.26);
+      --primary: #0d6efd;
+      --primary-strong: #0a4cb0;
+      --danger: #da3d52;
+      --ok: #1a9b5b;
+      --surface: rgba(255, 255, 255, 0.74);
+      --surface-solid: #ffffff;
+      --shadow-lg: 0 24px 50px rgba(13, 45, 106, 0.14);
+      --shadow-md: 0 12px 28px rgba(17, 49, 102, 0.12);
+      --radius-xl: 22px;
+      --radius-lg: 16px;
+      --radius-md: 11px;
     }
-    * { box-sizing: border-box; }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: linear-gradient(160deg, #0b1220, #0e1630);
-      color: var(--text);
+      font-family: "Manrope", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 6% 5%, rgba(81, 175, 255, 0.28), transparent 30%),
+        radial-gradient(circle at 96% 1%, rgba(142, 193, 255, 0.35), transparent 32%),
+        linear-gradient(165deg, var(--bg-0), var(--bg-1));
       min-height: 100vh;
     }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(18, 63, 132, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(18, 63, 132, 0.07) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: radial-gradient(circle at center, black 35%, transparent 88%);
+      opacity: 0.5;
+    }
+
+    .orb {
+      position: fixed;
+      width: 360px;
+      height: 360px;
+      border-radius: 999px;
+      filter: blur(42px);
+      opacity: 0.34;
+      z-index: -1;
+      pointer-events: none;
+      animation: float 16s ease-in-out infinite;
+    }
+
+    .orb.a {
+      background: #7fd2ff;
+      right: -120px;
+      top: -150px;
+    }
+
+    .orb.b {
+      background: #92efcc;
+      left: -140px;
+      bottom: -170px;
+      animation-delay: -5s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-14px) scale(1.05); }
+    }
+
     .wrap {
-      max-width: 1160px;
-      margin: 24px auto;
-      padding: 0 16px;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px 18px 34px;
     }
+
     .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      padding: 18px;
       margin-bottom: 14px;
+      box-shadow: var(--shadow-md);
+      animation: reveal 0.45s ease both;
     }
-    h1 { margin: 0 0 8px; font-size: 1.45rem; }
-    h2 { margin: 0 0 10px; font-size: 1.05rem; }
-    h3 { margin: 0 0 8px; font-size: 0.95rem; color: #b9c8e3; }
-    p { color: var(--muted); margin-top: 0; }
-    label { display: block; margin-bottom: 8px; font-size: 0.92rem; color: #c9d6eb; }
-    .small { font-size: 0.82rem; color: var(--muted); }
-    input[type="text"], input[type="password"], input[type="number"], textarea {
+
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(7px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+    }
+
+    .eyebrow {
+      margin: 0;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #5374a6;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 7px 0 8px;
+      font-family: "Outfit", sans-serif;
+      letter-spacing: -0.02em;
+      font-size: clamp(1.4rem, 2.5vw, 2.1rem);
+      line-height: 1.15;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-family: "Outfit", sans-serif;
+      letter-spacing: -0.01em;
+      font-size: 1.08rem;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-family: "Outfit", sans-serif;
+      color: #2f4f7f;
+      font-size: 0.95rem;
+      letter-spacing: 0.01em;
+    }
+
+    p {
+      color: var(--ink-soft);
+      margin-top: 0;
+    }
+
+    .sub {
+      margin: 0;
+      line-height: 1.5;
+      max-width: 760px;
+      font-size: 0.95rem;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      max-width: 440px;
+    }
+
+    .badge {
+      padding: 7px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(31, 67, 126, 0.17);
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #355581;
+      background: rgba(255, 255, 255, 0.76);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .meta {
+      margin: 0 0 10px;
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .panel-note {
+      border: 1px solid rgba(12, 79, 170, 0.2);
+      background: linear-gradient(120deg, rgba(238, 246, 255, 0.92), rgba(234, 245, 255, 0.72));
+      border-radius: var(--radius-md);
+      color: #376091;
+      padding: 10px 11px;
+      font-size: 0.84rem;
+      line-height: 1.45;
+      margin-bottom: 11px;
+    }
+
+    .group {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 13px;
+      margin-top: 10px;
+      background: rgba(255, 255, 255, 0.56);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: #2d4f7f;
+    }
+
+    .small {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      line-height: 1.45;
+      margin-top: 2px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    textarea {
       width: 100%;
-      background: var(--input);
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 8px;
-      padding: 9px;
+      background: #ffffff;
+      border: 1px solid rgba(18, 59, 117, 0.23);
+      color: var(--ink);
+      border-radius: var(--radius-md);
+      padding: 10px 11px;
       margin-top: 6px;
       font: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    textarea { min-height: 78px; resize: vertical; }
+
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.14);
+    }
+
+    textarea {
+      min-height: 82px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
     }
+
     .grid-3 {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
     }
+
     .chip-box {
       display: flex;
-      gap: 8px;
       align-items: center;
-      border: 1px solid var(--border);
-      padding: 7px 9px;
-      border-radius: 8px;
-      background: var(--input);
+      gap: 8px;
+      border: 1px solid rgba(26, 63, 120, 0.17);
+      padding: 8px 10px;
+      border-radius: 11px;
+      background: #ffffff;
+      transition: border-color 0.2s, transform 0.16s ease, box-shadow 0.2s;
     }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .chip-box:hover {
+      border-color: rgba(13, 110, 253, 0.38);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 14px rgba(20, 71, 139, 0.12);
+    }
+
+    .chip-box input {
+      margin: 0;
+    }
+
+    .row {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
     button {
       border: 0;
-      background: var(--primary);
+      border-radius: 11px;
+      background: linear-gradient(135deg, var(--primary), #2b8afc);
       color: #fff;
       padding: 10px 14px;
-      border-radius: 8px;
       cursor: pointer;
-      font-weight: 600;
+      font-size: 0.84rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      box-shadow: 0 10px 18px rgba(16, 82, 170, 0.2);
+      transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s;
     }
-    button.secondary { background: #30425f; }
-    button.danger { background: var(--danger); }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .msg { margin-top: 10px; font-size: 0.92rem; }
-    .msg.ok { color: #7ee787; }
-    .msg.err { color: #ff9f9a; }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 13px 22px rgba(16, 82, 170, 0.24);
+    }
+
+    button:disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    button.secondary {
+      background: linear-gradient(135deg, #5b759d, #6f8bb2);
+      box-shadow: 0 8px 16px rgba(50, 74, 108, 0.2);
+    }
+
+    button.danger {
+      background: linear-gradient(135deg, #cc344d, var(--danger));
+      box-shadow: 0 8px 16px rgba(171, 44, 71, 0.23);
+    }
+
+    .msg {
+      margin-top: 10px;
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+
+    .msg.ok { color: var(--ok); }
+    .msg.err { color: var(--danger); }
+
     .pill {
       display: inline-block;
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: 999px;
-      font-size: 0.76rem;
-      background: #20324f;
+      font-size: 0.7rem;
+      font-weight: 700;
+      background: #eaf2ff;
+      color: #44679b;
+      border: 1px solid rgba(26, 61, 115, 0.14);
+      vertical-align: middle;
     }
-    .group {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      margin-top: 10px;
-      background: rgba(9, 15, 30, 0.35);
-    }
+
     .token-preview {
-      font-family: Consolas, monospace;
-      font-size: 0.82rem;
-      color: #b8f7c4;
-      background: #0a1a11;
-      border: 1px solid #1f4730;
-      border-radius: 8px;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.79rem;
+      color: #1f5940;
+      background: #effbf5;
+      border: 1px solid rgba(29, 114, 79, 0.25);
+      border-radius: 11px;
       padding: 10px;
       word-break: break-all;
       min-height: 42px;
     }
+
+    .runs-card {
+      position: sticky;
+      top: 16px;
+      max-height: calc(100vh - 36px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--surface-solid);
+      max-height: min(60vh, 520px);
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.9rem;
+      font-size: 0.84rem;
+      min-width: 640px;
     }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.7rem;
+      color: #43608b;
+      background: #f2f6ff;
+    }
+
     th, td {
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid rgba(22, 63, 126, 0.1);
       text-align: left;
-      padding: 8px 4px;
+      padding: 8px 9px;
       vertical-align: top;
     }
-    @media (max-width: 900px) {
-      .grid, .grid-3 { grid-template-columns: 1fr; }
+
+    tr:hover td {
+      background: #f8fbff;
+    }
+
+    a {
+      color: var(--primary-strong);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .auth-card {
+      max-width: 540px;
+    }
+
+    @media (max-width: 1060px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .runs-card {
+        position: static;
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .hero {
+        flex-direction: column;
+      }
+
+      .badge-row {
+        justify-content: flex-start;
+      }
+
+      .grid,
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .table-wrap {
+        max-height: 380px;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="orb a"></div>
+  <div class="orb b"></div>
   <div class="wrap">
-    <div class="card">
-      <h1>OLXify Karachi Control Panel</h1>
-      <p>Manual trigger only. Lahore automation remains unchanged and not controlled here.</p>
-    </div>
+    <header class="card hero">
+      <div>
+        <p class="eyebrow">OLXify Ops Console</p>
+        <h1>Karachi Workflow Control Panel</h1>
+        <p class="sub">Manual dispatch only for Karachi. Lahore automation remains isolated, untouched, and scheduled exactly as before.</p>
+      </div>
+      <div class="badge-row">
+        <span class="badge">Karachi Manual Dispatch</span>
+        <span class="badge">Lahore Unchanged</span>
+        <span class="badge">Single-Admin Session Auth</span>
+        <span class="badge">OLX Filter Tokens</span>
+      </div>
+    </header>
 
-    <div id="loginCard" class="card">
+    <section id="loginCard" class="card auth-card">
       <h2>Admin Login</h2>
       <label>Username
         <input id="username" type="text" autocomplete="username" />
@@ -148,157 +483,162 @@
         <button id="loginBtn" onclick="login()">Login</button>
       </div>
       <div id="loginMsg" class="msg"></div>
-    </div>
+    </section>
 
-    <div id="panel" style="display:none;">
-      <div class="card">
-        <div class="row" style="justify-content:space-between; align-items:center;">
-          <h2 style="margin:0;">Karachi Manual Run</h2>
-          <button class="danger" onclick="logout()">Logout</button>
+    <section id="panel" style="display:none;">
+      <div class="layout">
+        <div class="card">
+          <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <h2 style="margin:0;">Karachi Manual Run</h2>
+            <button class="danger" onclick="logout()">Logout</button>
+          </div>
+          <p id="authMeta" class="meta"></p>
+          <div class="panel-note">Use this panel only for Karachi manual execution and Karachi-specific filter controls. Lahore workflow remains outside this dashboard and is not modified here.</div>
+
+          <div class="group">
+            <h3>GitHub Access Token</h3>
+            <label>GitHub PAT (optional if not set in Vercel env)
+              <input id="githubPat" type="password" placeholder="ghp_... (used only for API calls, not stored server-side)" />
+            </label>
+            <div class="small">If blank, backend uses `GITHUB_PAT` from Vercel environment.</div>
+          </div>
+
+          <div class="group">
+            <h3>Area Selection (Karachi)</h3>
+            <div class="row" style="margin-bottom:8px;">
+              <button class="secondary" onclick="selectAllAreas(true)">Select All Areas</button>
+              <button class="secondary" onclick="selectAllAreas(false)">Clear All</button>
+            </div>
+            <div id="areas" class="grid"></div>
+          </div>
+
+          <div class="group">
+            <h3>Execution Settings</h3>
+            <div class="grid">
+              <label>Max Pages
+                <input id="maxPages" type="number" min="1" max="10" value="2" />
+              </label>
+              <label>Max Listings
+                <input id="maxListings" type="number" min="1" max="50" value="15" />
+              </label>
+            </div>
+            <label>Custom OLX Search URL (optional, overrides area selection)
+              <input id="customSearchUrl" type="text" placeholder="https://www.olx.com.pk/.../cars_c84?filter=price_min_1000000" />
+            </label>
+            <div class="small">Example: `https://www.olx.com.pk/johar-town_g5000042/cars_c84?filter=price_min_1000000`</div>
+          </div>
+
+          <div class="group">
+            <h3>OLX Filters (default off)</h3>
+            <div class="grid">
+              <label>Price Min (Rs)
+                <input id="priceMin" type="number" min="0" placeholder="1000000" />
+              </label>
+              <label>Price Max (Rs)
+                <input id="priceMax" type="number" min="0" placeholder="3000000" />
+              </label>
+            </div>
+
+            <div class="grid-3">
+              <label>KM Min (token helper)
+                <input id="kmMin" type="number" min="0" placeholder="50000" />
+              </label>
+              <label>KM Max (token helper)
+                <input id="kmMax" type="number" min="0" placeholder="100000" />
+              </label>
+              <label>Year Min/Max (token helper format)
+                <input id="yearRange" type="text" placeholder="2018-2024" />
+              </label>
+            </div>
+
+            <div class="group">
+              <h3>Brand</h3>
+              <div id="brandChecks" class="grid"></div>
+            </div>
+
+            <div class="group">
+              <h3>Condition</h3>
+              <div id="conditionChecks" class="grid"></div>
+            </div>
+
+            <div class="group">
+              <h3>Fuel</h3>
+              <div id="fuelChecks" class="grid"></div>
+            </div>
+
+            <div class="group">
+              <h3>Transmission</h3>
+              <div id="transmissionChecks" class="grid"></div>
+            </div>
+
+            <div class="group">
+              <h3>Body Type</h3>
+              <div id="bodyChecks" class="grid"></div>
+            </div>
+
+            <div class="group">
+              <h3>Features</h3>
+              <div id="featureChecks" class="grid"></div>
+            </div>
+
+            <div class="group">
+              <h3>Registration City</h3>
+              <div id="regCityChecks" class="grid"></div>
+            </div>
+
+            <div class="group">
+              <h3>Car Documents / Assembly / Price Type</h3>
+              <div id="otherChecks" class="grid"></div>
+            </div>
+
+            <label>Import Filters from Existing OLX URL (optional)
+              <input id="importUrl" type="text" placeholder="Paste OLX filtered URL to import its filter tokens" />
+            </label>
+            <div class="row">
+              <button class="secondary" onclick="importFiltersFromUrl()">Import URL Filters</button>
+              <button class="secondary" onclick="clearAllFilters()">Clear All Filters</button>
+            </div>
+
+            <label>Additional Filter Tokens (comma-separated, exact OLX tokens)
+              <textarea id="extraTokens" placeholder="transmission_eq_automatic,registration_city_eq_lahore"></textarea>
+            </label>
+            <div class="small">Use this for advanced filters to keep OLX query behavior fully intact.</div>
+
+            <div style="margin-top:10px;">
+              <div class="small">Effective `filter=` value sent to workflow:</div>
+              <div id="tokenPreview" class="token-preview"></div>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <button id="runBtn" onclick="runKarachi()">Run Karachi Workflow</button>
+          </div>
+          <div id="runMsg" class="msg"></div>
         </div>
-        <p id="authMeta"></p>
 
-        <div class="group">
-          <h3>GitHub Access Token</h3>
-          <label>GitHub PAT (optional if not set in Vercel env)
-            <input id="githubPat" type="password" placeholder="ghp_... (used only for API calls, not stored server-side)" />
-          </label>
-          <div class="small">If blank, backend uses `GITHUB_PAT` from Vercel environment.</div>
-        </div>
-
-        <div class="group">
-          <h3>Area Selection (Karachi)</h3>
-          <div class="row" style="margin-bottom:8px;">
-            <button class="secondary" onclick="selectAllAreas(true)">Select All Areas</button>
-            <button class="secondary" onclick="selectAllAreas(false)">Clear All</button>
+        <aside class="card runs-card">
+          <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h2 style="margin:0;">Recent Karachi Workflow Runs</h2>
+            <button class="secondary" onclick="loadRuns()">Refresh</button>
           </div>
-          <div id="areas" class="grid"></div>
-        </div>
-
-        <div class="group">
-          <h3>Execution Settings</h3>
-          <div class="grid">
-            <label>Max Pages
-              <input id="maxPages" type="number" min="1" max="10" value="2" />
-            </label>
-            <label>Max Listings
-              <input id="maxListings" type="number" min="1" max="50" value="15" />
-            </label>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Created</th>
+                  <th>Status</th>
+                  <th>Conclusion</th>
+                  <th>Title</th>
+                  <th>Actor</th>
+                  <th>Link</th>
+                </tr>
+              </thead>
+              <tbody id="runsTable"></tbody>
+            </table>
           </div>
-          <label>Custom OLX Search URL (optional, overrides area selection)
-            <input id="customSearchUrl" type="text" placeholder="https://www.olx.com.pk/.../cars_c84?filter=price_min_1000000" />
-          </label>
-          <div class="small">Example: `https://www.olx.com.pk/johar-town_g5000042/cars_c84?filter=price_min_1000000`</div>
-        </div>
-
-        <div class="group">
-          <h3>OLX Filters (default off)</h3>
-          <div class="grid">
-            <label>Price Min (Rs)
-              <input id="priceMin" type="number" min="0" placeholder="1000000" />
-            </label>
-            <label>Price Max (Rs)
-              <input id="priceMax" type="number" min="0" placeholder="3000000" />
-            </label>
-          </div>
-
-          <div class="grid-3">
-            <label>KM Min (token helper)
-              <input id="kmMin" type="number" min="0" placeholder="50000" />
-            </label>
-            <label>KM Max (token helper)
-              <input id="kmMax" type="number" min="0" placeholder="100000" />
-            </label>
-            <label>Year Min/Max (token helper format)
-              <input id="yearRange" type="text" placeholder="2018-2024" />
-            </label>
-          </div>
-
-          <div class="group">
-            <h3>Brand</h3>
-            <div id="brandChecks" class="grid"></div>
-          </div>
-
-          <div class="group">
-            <h3>Condition</h3>
-            <div id="conditionChecks" class="grid"></div>
-          </div>
-
-          <div class="group">
-            <h3>Fuel</h3>
-            <div id="fuelChecks" class="grid"></div>
-          </div>
-
-          <div class="group">
-            <h3>Transmission</h3>
-            <div id="transmissionChecks" class="grid"></div>
-          </div>
-
-          <div class="group">
-            <h3>Body Type</h3>
-            <div id="bodyChecks" class="grid"></div>
-          </div>
-
-          <div class="group">
-            <h3>Features</h3>
-            <div id="featureChecks" class="grid"></div>
-          </div>
-
-          <div class="group">
-            <h3>Registration City</h3>
-            <div id="regCityChecks" class="grid"></div>
-          </div>
-
-          <div class="group">
-            <h3>Car Documents / Assembly / Price Type</h3>
-            <div id="otherChecks" class="grid"></div>
-          </div>
-
-          <label>Import Filters from Existing OLX URL (optional)
-            <input id="importUrl" type="text" placeholder="Paste OLX filtered URL to import its filter tokens" />
-          </label>
-          <div class="row">
-            <button class="secondary" onclick="importFiltersFromUrl()">Import URL Filters</button>
-            <button class="secondary" onclick="clearAllFilters()">Clear All Filters</button>
-          </div>
-
-          <label>Additional Filter Tokens (comma-separated, exact OLX tokens)
-            <textarea id="extraTokens" placeholder="transmission_eq_automatic,registration_city_eq_lahore"></textarea>
-          </label>
-          <div class="small">Use this for advanced filters to keep OLX query behavior fully intact.</div>
-
-          <div style="margin-top:10px;">
-            <div class="small">Effective `filter=` value sent to workflow:</div>
-            <div id="tokenPreview" class="token-preview"></div>
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:10px;">
-          <button id="runBtn" onclick="runKarachi()">Run Karachi Workflow</button>
-        </div>
-        <div id="runMsg" class="msg"></div>
+        </aside>
       </div>
-
-      <div class="card">
-        <div class="row" style="justify-content:space-between; align-items:center;">
-          <h2 style="margin:0;">Recent Karachi Workflow Runs</h2>
-          <button class="secondary" onclick="loadRuns()">Refresh</button>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Created</th>
-              <th>Status</th>
-              <th>Conclusion</th>
-              <th>Title</th>
-              <th>Actor</th>
-              <th>Link</th>
-            </tr>
-          </thead>
-          <tbody id="runsTable"></tbody>
-        </table>
-      </div>
-    </div>
+    </section>
   </div>
 
   <script>
@@ -633,7 +973,6 @@
           a.target = "_blank";
           a.rel = "noopener noreferrer";
           a.textContent = "Open";
-          a.style.color = "#9cc4ff";
           linkTd.appendChild(a);
           tr.appendChild(linkTd);
           tbody.appendChild(tr);
