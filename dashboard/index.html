@@ -14,6 +14,7 @@
       --primary: #2f81f7;
       --danger: #f85149;
       --ok: #2da44e;
+      --input: #0d1426;
     }
     * { box-sizing: border-box; }
     body {
@@ -24,43 +25,52 @@
       min-height: 100vh;
     }
     .wrap {
-      max-width: 980px;
-      margin: 32px auto;
+      max-width: 1160px;
+      margin: 24px auto;
       padding: 0 16px;
     }
     .card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 18px;
-      margin-bottom: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
     }
     h1 { margin: 0 0 8px; font-size: 1.45rem; }
-    h2 { margin: 0 0 12px; font-size: 1.05rem; }
+    h2 { margin: 0 0 10px; font-size: 1.05rem; }
+    h3 { margin: 0 0 8px; font-size: 0.95rem; color: #b9c8e3; }
     p { color: var(--muted); margin-top: 0; }
-    label { display: block; margin-bottom: 8px; font-size: 0.95rem; }
-    input[type="text"], input[type="password"], input[type="number"] {
+    label { display: block; margin-bottom: 8px; font-size: 0.92rem; color: #c9d6eb; }
+    .small { font-size: 0.82rem; color: var(--muted); }
+    input[type="text"], input[type="password"], input[type="number"], textarea {
       width: 100%;
-      background: #0d1426;
+      background: var(--input);
       border: 1px solid var(--border);
       color: var(--text);
       border-radius: 8px;
-      padding: 10px;
+      padding: 9px;
       margin-top: 6px;
+      font: inherit;
     }
+    textarea { min-height: 78px; resize: vertical; }
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
     }
-    .area {
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .chip-box {
       display: flex;
       gap: 8px;
       align-items: center;
       border: 1px solid var(--border);
-      padding: 8px;
+      padding: 7px 9px;
       border-radius: 8px;
-      background: #0d1426;
+      background: var(--input);
     }
     .row { display: flex; gap: 10px; flex-wrap: wrap; }
     button {
@@ -78,6 +88,31 @@
     .msg { margin-top: 10px; font-size: 0.92rem; }
     .msg.ok { color: #7ee787; }
     .msg.err { color: #ff9f9a; }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      background: #20324f;
+    }
+    .group {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 10px;
+      background: rgba(9, 15, 30, 0.35);
+    }
+    .token-preview {
+      font-family: Consolas, monospace;
+      font-size: 0.82rem;
+      color: #b8f7c4;
+      background: #0a1a11;
+      border: 1px solid #1f4730;
+      border-radius: 8px;
+      padding: 10px;
+      word-break: break-all;
+      min-height: 42px;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -89,15 +124,8 @@
       padding: 8px 4px;
       vertical-align: top;
     }
-    .pill {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 0.78rem;
-      background: #20324f;
-    }
-    @media (max-width: 700px) {
-      .grid { grid-template-columns: 1fr; }
+    @media (max-width: 900px) {
+      .grid, .grid-3 { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -105,7 +133,7 @@
   <div class="wrap">
     <div class="card">
       <h1>OLXify Karachi Control Panel</h1>
-      <p>Manual trigger only. Lahore automation remains unchanged and is not controlled here.</p>
+      <p>Manual trigger only. Lahore automation remains unchanged and not controlled here.</p>
     </div>
 
     <div id="loginCard" class="card">
@@ -129,19 +157,122 @@
           <button class="danger" onclick="logout()">Logout</button>
         </div>
         <p id="authMeta"></p>
-        <div class="row" style="margin-bottom:10px;">
-          <button class="secondary" onclick="selectAll(true)">Select All Areas</button>
-          <button class="secondary" onclick="selectAll(false)">Clear All</button>
-        </div>
-        <div id="areas" class="grid"></div>
-        <div class="row" style="margin-top:12px;">
-          <label style="flex:1;">Max Pages
-            <input id="maxPages" type="number" min="1" max="10" value="2" />
+
+        <div class="group">
+          <h3>GitHub Access Token</h3>
+          <label>GitHub PAT (optional if not set in Vercel env)
+            <input id="githubPat" type="password" placeholder="ghp_... (used only for API calls, not stored server-side)" />
           </label>
-          <label style="flex:1;">Max Listings
-            <input id="maxListings" type="number" min="1" max="50" value="15" />
-          </label>
+          <div class="small">If blank, backend uses `GITHUB_PAT` from Vercel environment.</div>
         </div>
+
+        <div class="group">
+          <h3>Area Selection (Karachi)</h3>
+          <div class="row" style="margin-bottom:8px;">
+            <button class="secondary" onclick="selectAllAreas(true)">Select All Areas</button>
+            <button class="secondary" onclick="selectAllAreas(false)">Clear All</button>
+          </div>
+          <div id="areas" class="grid"></div>
+        </div>
+
+        <div class="group">
+          <h3>Execution Settings</h3>
+          <div class="grid">
+            <label>Max Pages
+              <input id="maxPages" type="number" min="1" max="10" value="2" />
+            </label>
+            <label>Max Listings
+              <input id="maxListings" type="number" min="1" max="50" value="15" />
+            </label>
+          </div>
+          <label>Custom OLX Search URL (optional, overrides area selection)
+            <input id="customSearchUrl" type="text" placeholder="https://www.olx.com.pk/.../cars_c84?filter=price_min_1000000" />
+          </label>
+          <div class="small">Example: `https://www.olx.com.pk/johar-town_g5000042/cars_c84?filter=price_min_1000000`</div>
+        </div>
+
+        <div class="group">
+          <h3>OLX Filters (default off)</h3>
+          <div class="grid">
+            <label>Price Min (Rs)
+              <input id="priceMin" type="number" min="0" placeholder="1000000" />
+            </label>
+            <label>Price Max (Rs)
+              <input id="priceMax" type="number" min="0" placeholder="3000000" />
+            </label>
+          </div>
+
+          <div class="grid-3">
+            <label>KM Min (token helper)
+              <input id="kmMin" type="number" min="0" placeholder="50000" />
+            </label>
+            <label>KM Max (token helper)
+              <input id="kmMax" type="number" min="0" placeholder="100000" />
+            </label>
+            <label>Year Min/Max (token helper format)
+              <input id="yearRange" type="text" placeholder="2018-2024" />
+            </label>
+          </div>
+
+          <div class="group">
+            <h3>Brand</h3>
+            <div id="brandChecks" class="grid"></div>
+          </div>
+
+          <div class="group">
+            <h3>Condition</h3>
+            <div id="conditionChecks" class="grid"></div>
+          </div>
+
+          <div class="group">
+            <h3>Fuel</h3>
+            <div id="fuelChecks" class="grid"></div>
+          </div>
+
+          <div class="group">
+            <h3>Transmission</h3>
+            <div id="transmissionChecks" class="grid"></div>
+          </div>
+
+          <div class="group">
+            <h3>Body Type</h3>
+            <div id="bodyChecks" class="grid"></div>
+          </div>
+
+          <div class="group">
+            <h3>Features</h3>
+            <div id="featureChecks" class="grid"></div>
+          </div>
+
+          <div class="group">
+            <h3>Registration City</h3>
+            <div id="regCityChecks" class="grid"></div>
+          </div>
+
+          <div class="group">
+            <h3>Car Documents / Assembly / Price Type</h3>
+            <div id="otherChecks" class="grid"></div>
+          </div>
+
+          <label>Import Filters from Existing OLX URL (optional)
+            <input id="importUrl" type="text" placeholder="Paste OLX filtered URL to import its filter tokens" />
+          </label>
+          <div class="row">
+            <button class="secondary" onclick="importFiltersFromUrl()">Import URL Filters</button>
+            <button class="secondary" onclick="clearAllFilters()">Clear All Filters</button>
+          </div>
+
+          <label>Additional Filter Tokens (comma-separated, exact OLX tokens)
+            <textarea id="extraTokens" placeholder="transmission_eq_automatic,registration_city_eq_lahore"></textarea>
+          </label>
+          <div class="small">Use this for advanced filters to keep OLX query behavior fully intact.</div>
+
+          <div style="margin-top:10px;">
+            <div class="small">Effective `filter=` value sent to workflow:</div>
+            <div id="tokenPreview" class="token-preview"></div>
+          </div>
+        </div>
+
         <div class="row" style="margin-top:10px;">
           <button id="runBtn" onclick="runKarachi()">Run Karachi Workflow</button>
         </div>
@@ -173,28 +304,198 @@
   <script>
     let areaData = [];
 
+    const BRAND_OPTIONS = [
+      ["Toyota", "make_eq_toyota"], ["Honda", "make_eq_cars-honda"], ["Suzuki", "make_eq_cars-suzuki"],
+      ["Nissan", "make_eq_nissan"], ["Daihatsu", "make_eq_daihatsu"], ["Hyundai", "make_eq_hyundai"],
+      ["Changan", "make_eq_changan"], ["KIA", "make_eq_kia"], ["MG", "make_eq_mg"],
+      ["Haval", "make_eq_haval"], ["Mercedes", "make_eq_mercedes"], ["Mitsubishi", "make_eq_mitsubishi"],
+      ["Proton", "make_eq_proton"], ["Prince", "make_eq_prince"], ["Subaru", "make_eq_subaru"],
+      ["Volkswagen", "make_eq_volkswagen"], ["DFSK", "make_eq_dfsk"], ["Audi", "make_eq_audi"],
+      ["Tesla", "make_eq_tesla"], ["FAW", "make_eq_faw"], ["Chevrolet", "make_eq_chevrolet"],
+      ["Isuzu", "make_eq_cars-isuzu"], ["Other Brands", "make_eq_cars-other"], ["BMW", "make_eq_bmw"],
+      ["Chery", "make_eq_chery"], ["Peugeot", "make_eq_peugeot"], ["JAC", "make_eq_jac"],
+      ["Ford", "make_eq_ford"], ["Range Rover", "make_eq_range-rover"], ["JW Forland", "make_eq_jw-fortland"]
+    ];
+    const CONDITION_OPTIONS = [["Used", "new_used_eq_used"], ["New", "new_used_eq_new"]];
+    const FUEL_OPTIONS = [["Petrol", "petrol_eq_petrol"], ["Hybrid", "petrol_eq_hybrid"], ["Diesel", "petrol_eq_diesel"], ["Electric", "petrol_eq_electric"], ["LPG", "petrol_eq_lpg"]];
+    const TRANSMISSION_OPTIONS = [["Automatic", "transmission_eq_automatic"], ["Manual", "transmission_eq_manual"]];
+    const BODY_OPTIONS = [
+      ["Sedan", "body_type_eq_3"], ["Hatchback", "body_type_eq_4"], ["SUV", "body_type_eq_5"], ["Other", "body_type_eq_6"],
+      ["Small city car", "body_type_eq_11"], ["Pickup", "body_type_eq_10"], ["Convertible", "body_type_eq_2"],
+      ["Van / Bus", "body_type_eq_7"], ["MPV", "body_type_eq_9"], ["Sports / Coupe", "body_type_eq_1"]
+    ];
+    const FEATURE_OPTIONS = [
+      ["Power Steering", "features_eq_20"], ["Power Windows", "features_eq_21"], ["Power Mirrors", "features_eq_19"],
+      ["ABS", "features_eq_1"], ["Airbags", "features_eq_2"], ["AM/FM Radio", "features_eq_5"],
+      ["Bluetooth System", "features_eq_31"], ["Touch Screen", "features_eq_39"]
+    ];
+    const REG_CITY_OPTIONS = [
+      ["Lahore", "registration_city_eq_lahore"], ["Punjab", "registration_city_eq_punjab"], ["Unregistered", "registration_city_eq_unregistered"],
+      ["Islamabad", "registration_city_eq_islamabad"], ["Sindh", "registration_city_eq_sindh"], ["Karachi", "registration_city_eq_karachi"],
+      ["Multan", "registration_city_eq_multan"], ["Rawalpindi", "registration_city_eq_rawalpindi"], ["Ali Masjid", "registration_city_eq_alimasjid"],
+      ["Faisalabad", "registration_city_eq_faisalabad"], ["Gujranwala", "registration_city_eq_gujranwala"],
+      ["Okara", "registration_city_eq_okara"], ["Sahiwal", "registration_city_eq_sahiwal"]
+    ];
+    const OTHER_OPTIONS = [
+      ["Documents: Original", "documents_eq_original"], ["Documents: Duplicate", "documents_eq_duplicate"],
+      ["Assembly: Local", "assembly_eq_local"], ["Assembly: Imported", "assembly_eq_imported"],
+      ["Price Type: Call for price", "price_type_eq_requestable"]
+    ];
+
     function setMsg(id, text, ok) {
       const el = document.getElementById(id);
       el.textContent = text || "";
       el.className = "msg " + (text ? (ok ? "ok" : "err") : "");
     }
 
+    function cleanToken(t) {
+      return String(t || "").trim().toLowerCase();
+    }
+
+    function dedupeTokens(tokens) {
+      const out = [];
+      for (const t of tokens) {
+        const x = cleanToken(t);
+        if (!x) continue;
+        if (!/^[a-z0-9][a-z0-9_-]*$/.test(x)) continue;
+        if (!out.includes(x)) out.push(x);
+      }
+      return out;
+    }
+
     function areaSelection() {
       return Array.from(document.querySelectorAll(".area-check:checked")).map((x) => x.value);
     }
 
-    function selectAll(on) {
+    function selectAllAreas(on) {
       document.querySelectorAll(".area-check").forEach((x) => { x.checked = on; });
     }
 
     function renderAreas() {
       const root = document.getElementById("areas");
       root.innerHTML = areaData.map((a) => (
-        '<label class="area">' +
+        '<label class="chip-box">' +
         '<input class="area-check" type="checkbox" value="' + a.key + '" checked />' +
         '<span>' + a.name + ' <span class="pill">' + a.key + '</span></span>' +
         '</label>'
       )).join("");
+    }
+
+    function renderTokenCheckboxes(rootId, options, className) {
+      const root = document.getElementById(rootId);
+      root.innerHTML = options.map((x) => (
+        '<label class="chip-box">' +
+        '<input type="checkbox" class="' + className + '" value="' + x[1] + '" />' +
+        '<span>' + x[0] + '</span>' +
+        '</label>'
+      )).join("");
+    }
+
+    function gatherCheckedTokens(className) {
+      return Array.from(document.querySelectorAll("." + className + ":checked")).map((x) => x.value);
+    }
+
+    function parseYearRangeToken() {
+      const value = document.getElementById("yearRange").value.trim();
+      if (!value) return [];
+      const m = value.match(/^(\d{4})\s*-\s*(\d{4})$/);
+      if (!m) return [];
+      return ["year_between_" + m[1] + "_to_" + m[2]];
+    }
+
+    function parseExtraTokensField() {
+      const raw = document.getElementById("extraTokens").value.trim();
+      if (!raw) return [];
+      let tokenStr = raw;
+      if (raw.startsWith("http://") || raw.startsWith("https://")) {
+        try {
+          const u = new URL(raw);
+          tokenStr = u.searchParams.get("filter") || "";
+        } catch (_err) {
+          tokenStr = raw;
+        }
+      } else if (raw.startsWith("?") || raw.includes("filter=")) {
+        const qs = new URLSearchParams(raw.replace(/^\?/, ""));
+        tokenStr = qs.get("filter") || "";
+      }
+      return tokenStr.split(",").map((x) => x.trim()).filter(Boolean);
+    }
+
+    function buildFilterTokens() {
+      const tokens = [];
+
+      const priceMin = document.getElementById("priceMin").value.trim();
+      const priceMax = document.getElementById("priceMax").value.trim();
+      if (priceMin) tokens.push("price_min_" + priceMin);
+      if (priceMax) tokens.push("price_max_" + priceMax);
+
+      const kmMin = document.getElementById("kmMin").value.trim();
+      const kmMax = document.getElementById("kmMax").value.trim();
+      if (kmMin) tokens.push("mileage_min_" + kmMin);
+      if (kmMax) tokens.push("mileage_max_" + kmMax);
+
+      tokens.push(...parseYearRangeToken());
+      tokens.push(...gatherCheckedTokens("tok-brand"));
+      tokens.push(...gatherCheckedTokens("tok-condition"));
+      tokens.push(...gatherCheckedTokens("tok-fuel"));
+      tokens.push(...gatherCheckedTokens("tok-trans"));
+      tokens.push(...gatherCheckedTokens("tok-body"));
+      tokens.push(...gatherCheckedTokens("tok-feature"));
+      tokens.push(...gatherCheckedTokens("tok-reg"));
+      tokens.push(...gatherCheckedTokens("tok-other"));
+      tokens.push(...parseExtraTokensField());
+
+      const finalTokens = dedupeTokens(tokens);
+      document.getElementById("tokenPreview").textContent = finalTokens.join(",");
+      return finalTokens.join(",");
+    }
+
+    function importFiltersFromUrl() {
+      const raw = document.getElementById("importUrl").value.trim();
+      if (!raw) {
+        setMsg("runMsg", "Import URL is empty.", false);
+        return;
+      }
+      try {
+        const u = new URL(raw);
+        const tok = (u.searchParams.get("filter") || "").trim();
+        document.getElementById("extraTokens").value = tok;
+        setMsg("runMsg", "Imported filter tokens from URL.", true);
+      } catch (_err) {
+        setMsg("runMsg", "Invalid URL for filter import.", false);
+      }
+      buildFilterTokens();
+    }
+
+    function clearAllFilters() {
+      [
+        "priceMin", "priceMax", "kmMin", "kmMax", "yearRange", "extraTokens", "importUrl"
+      ].forEach((id) => { document.getElementById(id).value = ""; });
+      document.querySelectorAll(".tok-brand,.tok-condition,.tok-fuel,.tok-trans,.tok-body,.tok-feature,.tok-reg,.tok-other")
+        .forEach((x) => { x.checked = false; });
+      buildFilterTokens();
+    }
+
+    function bindFilterPreview() {
+      const ids = ["priceMin", "priceMax", "kmMin", "kmMax", "yearRange", "extraTokens"];
+      ids.forEach((id) => {
+        document.getElementById(id).addEventListener("input", buildFilterTokens);
+      });
+      document.querySelectorAll(".tok-brand,.tok-condition,.tok-fuel,.tok-trans,.tok-body,.tok-feature,.tok-reg,.tok-other")
+        .forEach((x) => x.addEventListener("change", buildFilterTokens));
+    }
+
+    function initializeFilterControls() {
+      renderTokenCheckboxes("brandChecks", BRAND_OPTIONS, "tok-brand");
+      renderTokenCheckboxes("conditionChecks", CONDITION_OPTIONS, "tok-condition");
+      renderTokenCheckboxes("fuelChecks", FUEL_OPTIONS, "tok-fuel");
+      renderTokenCheckboxes("transmissionChecks", TRANSMISSION_OPTIONS, "tok-trans");
+      renderTokenCheckboxes("bodyChecks", BODY_OPTIONS, "tok-body");
+      renderTokenCheckboxes("featureChecks", FEATURE_OPTIONS, "tok-feature");
+      renderTokenCheckboxes("regCityChecks", REG_CITY_OPTIONS, "tok-reg");
+      renderTokenCheckboxes("otherChecks", OTHER_OPTIONS, "tok-other");
+      bindFilterPreview();
+      buildFilterTokens();
     }
 
     async function login() {
@@ -240,8 +541,10 @@
       const data = await resp.json();
       areaData = data.karachiAreas || [];
       renderAreas();
+      initializeFilterControls();
+      const patState = data.githubPatConfigured ? "configured on server" : "missing on server (provide in form above)";
       document.getElementById("authMeta").textContent =
-        "Logged in as " + data.username + ". Target workflow: " + data.workflow + " (" + data.ref + ")";
+        "Logged in as " + data.username + ". Workflow: " + data.workflow + " (" + data.ref + "). GitHub PAT: " + patState + ".";
       document.getElementById("panel").style.display = "block";
       document.getElementById("loginCard").style.display = "none";
       await loadRuns();
@@ -250,12 +553,17 @@
     async function runKarachi() {
       setMsg("runMsg", "", false);
       const selected = areaSelection();
-      if (!selected.length) {
-        setMsg("runMsg", "Select at least one Karachi area.", false);
+      const customSearchUrl = document.getElementById("customSearchUrl").value.trim();
+      if (!selected.length && !customSearchUrl) {
+        setMsg("runMsg", "Select at least one Karachi area or provide a customSearchUrl.", false);
         return;
       }
+
       const btn = document.getElementById("runBtn");
       btn.disabled = true;
+      const filterTokens = buildFilterTokens();
+      const githubToken = document.getElementById("githubPat").value.trim();
+
       try {
         const resp = await fetch("/api/run-karachi", {
           method: "POST",
@@ -263,7 +571,10 @@
           body: JSON.stringify({
             areas: selected,
             maxPages: document.getElementById("maxPages").value,
-            maxListings: document.getElementById("maxListings").value
+            maxListings: document.getElementById("maxListings").value,
+            githubToken,
+            filterTokens,
+            customSearchUrl
           })
         });
         const data = await resp.json();
@@ -289,8 +600,13 @@
     async function loadRuns() {
       const tbody = document.getElementById("runsTable");
       tbody.innerHTML = "";
+      const githubToken = document.getElementById("githubPat").value.trim();
       try {
-        const resp = await fetch("/api/runs");
+        const resp = await fetch("/api/runs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ githubToken })
+        });
         const data = await resp.json();
         if (!resp.ok) {
           const tr = document.createElement("tr");

@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
     username: session.u,
     workflow: cfg.workflowFile,
     ref: cfg.ref,
+    githubPatConfigured: Boolean(cfg.token),
     karachiAreas: KARACHI_AREAS
   });
 };
-

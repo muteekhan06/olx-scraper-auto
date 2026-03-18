@@ -15,6 +15,14 @@ on:
         description: "Max listings per area (kept for compatibility)"
         required: true
         default: "15"
+      filter_tokens:
+        description: "Optional OLX filter tokens (comma-separated), e.g. price_min_1000000,make_eq_toyota"
+        required: false
+        default: ""
+      custom_search_url:
+        description: "Optional full OLX cars URL (overrides area selection), e.g. https://www.olx.com.pk/johar-town_g5000042/cars_c84?filter=price_min_1000000"
+        required: false
+        default: ""
 
 jobs:
   scrape-and-update-karachi:
@@ -50,19 +58,39 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          RAW_AREAS="${{ github.event.inputs.areas }}"
-          RAW_AREAS="$(echo "$RAW_AREAS" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
+          RAW_CUSTOM_URL="$(printf '%s' "${{ github.event.inputs.custom_search_url }}" | tr -d '\r')"
+          RAW_FILTERS="$(printf '%s' "${{ github.event.inputs.filter_tokens }}" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
 
+          if [ -n "$RAW_FILTERS" ]; then
+            if [[ ! "$RAW_FILTERS" =~ ^[a-z0-9,_-]+$ ]]; then
+              echo "Invalid filter_tokens format. Use comma-separated tokens only."
+              exit 1
+            fi
+          fi
+          echo "FILTER_TOKENS=$RAW_FILTERS" >> "$GITHUB_ENV"
+
+          if [ -n "$RAW_CUSTOM_URL" ]; then
+            if [[ "$RAW_CUSTOM_URL" != https://www.olx.com.pk/*/cars_c84* ]]; then
+              echo "Invalid custom_search_url. Must point to www.olx.com.pk/*/cars_c84"
+              exit 1
+            fi
+            echo "CUSTOM_SEARCH_URL=$RAW_CUSTOM_URL" >> "$GITHUB_ENV"
+            echo "LOCATIONS=karachi" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          RAW_AREAS="$(printf '%s' "${{ github.event.inputs.areas }}" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
           if [ -z "$RAW_AREAS" ]; then
-            echo "areas input cannot be empty"
+            echo "areas input cannot be empty when custom_search_url is not set"
             exit 1
           fi
 
           if [ "$RAW_AREAS" = "all" ] || [ "$RAW_AREAS" = "karachi" ]; then
             echo "LOCATIONS=karachi" >> "$GITHUB_ENV"
+            echo "CUSTOM_SEARCH_URL=" >> "$GITHUB_ENV"
             exit 0
           fi
-
+          
           ALLOWED="gulshan_iqbal,gulistan_jauhar,fb_area,north_nazimabad,nazimabad,naya_nazimabad,north_karachi,new_karachi,saddar_town,dha_defence_karachi,clifton,buffer_zone_north,buffer_zone_2,khalid_bin_walid"
           SANITIZED=""
 
@@ -88,12 +116,15 @@ jobs:
           fi
 
           echo "LOCATIONS=$SANITIZED" >> "$GITHUB_ENV"
+          echo "CUSTOM_SEARCH_URL=" >> "$GITHUB_ENV"
 
       - name: Run Scraper (Karachi)
         env:
           # Configuration: Karachi Specific
           MAX_PAGES: ${{ github.event.inputs.max_pages }}
           MAX_LISTINGS: ${{ github.event.inputs.max_listings }}
+          FILTER_TOKENS: ${{ env.FILTER_TOKENS }}
+          CUSTOM_SEARCH_URL: ${{ env.CUSTOM_SEARCH_URL }}
           
           # Secrets - Mapping KARACHI_SHEET_ID secret to GOOGLE_SHEET_ID env var
           GOOGLE_SHEET_ID: ${{ secrets.KARACHI_SHEET_ID }}

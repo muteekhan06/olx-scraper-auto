@@ -168,17 +168,17 @@ function requireAuth(req, res) {
   return payload;
 }
 
-function getGithubConfig() {
+function getGithubConfig(tokenOverride = "") {
   const owner = (process.env.GITHUB_OWNER || "muteekhan06").trim();
   const repo = (process.env.GITHUB_REPO || "olx-scraper-auto").trim();
-  const token = (process.env.GITHUB_PAT || "").trim();
+  const token = (String(tokenOverride || "") || (process.env.GITHUB_PAT || "")).trim();
   const workflowFile = "karachi_daily_scrape.yml";
   const ref = (process.env.KARACHI_WORKFLOW_REF || "main").trim();
   return { owner, repo, token, workflowFile, ref };
 }
 
-async function githubRequest(path, options = {}) {
-  const cfg = getGithubConfig();
+async function githubRequest(path, options = {}, tokenOverride = "") {
+  const cfg = getGithubConfig(tokenOverride);
   if (!cfg.token) {
     const err = new Error("GITHUB_PAT is missing.");
     err.status = 500;

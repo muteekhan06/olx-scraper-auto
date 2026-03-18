@@ -7,7 +7,8 @@ import json
 import random
 import re
 import time
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from urllib.parse import parse_qsl, urlsplit, urlunsplit, urlencode
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -69,6 +70,64 @@ TITLE_FALLBACK_XPATH = (
     " | .//*[contains(@class,'_34bc0d5f')]//*[self::h1 or self::h2 or self::span or self::div]"
     " | .//*[contains(@class,'_562a2db2')]"
 )
+
+
+def _dedupe_preserve_order(values: List[str]) -> List[str]:
+    out: List[str] = []
+    for value in values:
+        token = value.strip()
+        if token and token not in out:
+            out.append(token)
+    return out
+
+
+def parse_filter_tokens(raw: str) -> List[str]:
+    """
+    Parse OLX filter tokens from:
+    - comma-separated token string
+    - query string with filter=
+    - full URL containing filter=
+    """
+    raw = (raw or "").strip()
+    if not raw:
+        return []
+
+    candidate = raw
+    if raw.startswith("http://") or raw.startswith("https://"):
+        split = urlsplit(raw)
+        params = dict(parse_qsl(split.query, keep_blank_values=True))
+        candidate = params.get("filter", "")
+    elif raw.startswith("?") or "filter=" in raw:
+        params = dict(parse_qsl(raw.lstrip("?"), keep_blank_values=True))
+        candidate = params.get("filter", "")
+
+    tokens = [x.strip().lower() for x in candidate.split(",") if x.strip()]
+    clean = [x for x in tokens if re.fullmatch(r"[a-z0-9][a-z0-9_-]*", x)]
+    return _dedupe_preserve_order(clean)
+
+
+def build_list_page_url(base_url: str, page: int, extra_filter_tokens: Optional[List[str]] = None) -> str:
+    """Merge pagination and filter tokens into a list-page URL."""
+    split = urlsplit(base_url)
+    pairs = parse_qsl(split.query, keep_blank_values=True)
+
+    passthrough: List[Tuple[str, str]] = []
+    existing_tokens: List[str] = []
+    for key, value in pairs:
+        if key == "filter":
+            existing_tokens.extend([x.strip().lower() for x in value.split(",") if x.strip()])
+        elif key != "page":
+            passthrough.append((key, value))
+
+    merged_tokens = _dedupe_preserve_order(existing_tokens + list(extra_filter_tokens or []))
+    if merged_tokens:
+        passthrough.append(("filter", ",".join(merged_tokens)))
+
+    if page > 1:
+        passthrough.append(("page", str(page)))
+
+    new_query = urlencode(passthrough, doseq=True)
+    return urlunsplit((split.scheme, split.netloc, split.path, new_query, split.fragment))
 
 
 def scrape_list_page(
@@ -466,6 +525,8 @@ def scrape_listings(
     max_listings: int = None,
     progress_callback: Optional[Callable] = None,
     selected_locations: Optional[List[str]] = None,
+    filter_tokens: str = "",
+    custom_search_url: str = "",
 ) -> List[Dict[str, str]]:
     """
     Main scraping function - collects listings from multiple Lahore locations.
@@ -476,15 +537,27 @@ def scrape_listings(
         progress_callback: Optional callback for progress updates
         selected_locations: List of location keys to scrape (e.g., ['johar_town', 'model_town'])
                            If None, scrapes from all enabled locations
+        filter_tokens: Optional OLX filter token list (comma-separated) to append to URLs
+        custom_search_url: Optional full OLX cars URL; if provided, overrides location list
         
     Returns:
         List of dictionaries with listing data from all locations
     """
     max_pages = max_pages or SCRAPER_CONFIG.DEFAULT_MAX_PAGES
     max_listings_per_location = SCRAPER_CONFIG.LISTINGS_PER_LOCATION
+    parsed_filter_tokens = parse_filter_tokens(filter_tokens)
+    custom_search_url = (custom_search_url or "").strip()
     
     # Determine which locations to scrape
-    if selected_locations is None:
+    if custom_search_url:
+        locations_to_scrape = {
+            "custom_search": {
+                "name": "Custom Search URL",
+                "url": custom_search_url,
+                "enabled": True,
+            }
+        }
+    elif selected_locations is None:
         # Scrape all enabled locations
         locations_to_scrape = {
             key: loc for key, loc in SCRAPER_CONFIG.LOCATIONS.items() 
@@ -506,6 +579,8 @@ def scrape_listings(
     if progress_callback:
         location_names = [loc["name"] for loc in locations_to_scrape.values()]
         progress_callback(f"Starting scrape for {len(locations_to_scrape)} location(s): {', '.join(location_names)}")
+        if parsed_filter_tokens:
+            progress_callback(f"Applying OLX filter tokens: {','.join(parsed_filter_tokens)}")
     
     all_results: List[Dict[str, str]] = []
     
@@ -523,7 +598,11 @@ def scrape_listings(
         try:
             # Phase 1: Collect listing links for this location
             for page in range(1, max_pages + 1):
-                url = base_url if page == 1 else f"{base_url}?page={page}"
+                url = build_list_page_url(
+                    base_url,
+                    page=page,
+                    extra_filter_tokens=parsed_filter_tokens,
+                )
                 
                 if progress_callback:
                     progress_callback(f"📍 {location_name}: Page {page}/{max_pages}...")

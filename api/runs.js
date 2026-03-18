@@ -1,7 +1,7 @@
-const { getGithubConfig, githubRequest, json, requireAuth } = require("./_lib/auth");
+const { getGithubConfig, githubRequest, json, readJsonBody, requireAuth } = require("./_lib/auth");
 
 module.exports = async (req, res) => {
-  if (req.method !== "GET") {
+  if (req.method !== "GET" && req.method !== "POST") {
     json(res, 405, { error: "Method not allowed" });
     return;
   }
@@ -11,10 +11,23 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const cfg = getGithubConfig();
+  let tokenOverride = "";
+  if (req.method === "POST") {
+    try {
+      const body = await readJsonBody(req);
+      tokenOverride = String(body.githubToken || "").trim();
+    } catch (err) {
+      json(res, 400, { error: err.message });
+      return;
+    }
+  }
+
+  const cfg = getGithubConfig(tokenOverride);
   try {
     const data = await githubRequest(
-      `/repos/${cfg.owner}/${cfg.repo}/actions/workflows/${cfg.workflowFile}/runs?per_page=10`
+      `/repos/${cfg.owner}/${cfg.repo}/actions/workflows/${cfg.workflowFile}/runs?per_page=10`,
+      {},
+      tokenOverride
     );
 
     const runs = (data.workflow_runs || []).map((r) => ({
@@ -34,4 +47,3 @@ module.exports = async (req, res) => {
     json(res, err.status || 500, { error: err.message });
   }
 };
-

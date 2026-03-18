@@ -87,11 +87,15 @@ def main():
     MAX_PAGES = int(os.environ.get("MAX_PAGES", 5))
     MAX_LISTINGS = int(os.environ.get("MAX_LISTINGS", 50))
     LOCATIONS = os.environ.get("LOCATIONS", "all")
+    FILTER_TOKENS = os.environ.get("FILTER_TOKENS", "")
+    CUSTOM_SEARCH_URL = os.environ.get("CUSTOM_SEARCH_URL", "")
     
     stats = {
         "count": 0,
         "locations": LOCATIONS,
-        "sheet_url": None
+        "sheet_url": None,
+        "filters": FILTER_TOKENS,
+        "custom_search_url": CUSTOM_SEARCH_URL,
     }
     
     # Send Start Notification
@@ -102,7 +106,9 @@ def main():
         
         # Parse locations
         selected_locations = None
-        if LOCATIONS.lower() == "lahore":
+        if CUSTOM_SEARCH_URL:
+            log(f"📍 Mode: Custom Search URL ({CUSTOM_SEARCH_URL})")
+        elif LOCATIONS.lower() == "lahore":
             from app.config import LOCATIONS_LAHORE
             selected_locations = list(LOCATIONS_LAHORE.keys())
             log("📍 Mode: Lahore City Only")
@@ -114,6 +120,9 @@ def main():
             selected_locations = [x.strip() for x in LOCATIONS.split(",") if x.strip()]
         else:
             log("📍 Mode: All Locations (Lahore + Karachi)")
+
+        if FILTER_TOKENS:
+            log(f"🧩 Applying OLX filters: {FILTER_TOKENS}")
         
         # 1. Scrape Listings
         log("Phase 1: Discovery (Scraping Listings & Details)")
@@ -121,7 +130,9 @@ def main():
             max_pages=MAX_PAGES,
             max_listings=MAX_LISTINGS,
             progress_callback=log,
-            selected_locations=selected_locations
+            selected_locations=selected_locations,
+            filter_tokens=FILTER_TOKENS,
+            custom_search_url=CUSTOM_SEARCH_URL,
         )
         
         if not listings:
