@@ -140,16 +140,17 @@ function safeEqual(a, b) {
 }
 
 function verifyPassword(inputPassword) {
-  const adminPassword = process.env.DASHBOARD_ADMIN_PASSWORD || "";
-  const salt = process.env.DASHBOARD_ADMIN_SALT || "";
-  const hash = process.env.DASHBOARD_ADMIN_PASSWORD_HASH || "";
+  const adminPassword = (process.env.DASHBOARD_ADMIN_PASSWORD || "").trim();
+  const salt = (process.env.DASHBOARD_ADMIN_SALT || "").trim();
+  const hash = (process.env.DASHBOARD_ADMIN_PASSWORD_HASH || "").trim();
+  const normalizedInput = String(inputPassword || "");
 
   if (hash && salt) {
-    const derived = crypto.pbkdf2Sync(inputPassword, salt, 120000, 32, "sha256").toString("hex");
+    const derived = crypto.pbkdf2Sync(normalizedInput, salt, 120000, 32, "sha256").toString("hex");
     return safeEqual(derived, hash);
   }
 
-  return safeEqual(inputPassword, adminPassword);
+  return safeEqual(normalizedInput, adminPassword);
 }
 
 function requireAuth(req, res) {
@@ -168,11 +169,11 @@ function requireAuth(req, res) {
 }
 
 function getGithubConfig() {
-  const owner = process.env.GITHUB_OWNER || "muteekhan06";
-  const repo = process.env.GITHUB_REPO || "olx-scraper-auto";
-  const token = process.env.GITHUB_PAT || "";
+  const owner = (process.env.GITHUB_OWNER || "muteekhan06").trim();
+  const repo = (process.env.GITHUB_REPO || "olx-scraper-auto").trim();
+  const token = (process.env.GITHUB_PAT || "").trim();
   const workflowFile = "karachi_daily_scrape.yml";
-  const ref = process.env.KARACHI_WORKFLOW_REF || "main";
+  const ref = (process.env.KARACHI_WORKFLOW_REF || "main").trim();
   return { owner, repo, token, workflowFile, ref };
 }
 

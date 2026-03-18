@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const adminUser = process.env.DASHBOARD_ADMIN_USERNAME || "";
+  const adminUser = (process.env.DASHBOARD_ADMIN_USERNAME || "").trim();
   if (!adminUser) {
     json(res, 500, { error: "DASHBOARD_ADMIN_USERNAME is missing." });
     return;
@@ -72,4 +72,3 @@ module.exports = async (req, res) => {
   setSessionCookie(res, token);
   json(res, 200, { ok: true, username: adminUser });
 };
-

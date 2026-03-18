@@ -71,3 +71,4 @@ combined_*.csv
 combined_*.tsv
 contact_*.json
 *.pyc
+.vercel
