@@ -756,22 +756,37 @@
       return ["year_between_" + m[1] + "_to_" + m[2]];
     }
 
+    function extractFilterTokensFromSearchParams(searchParams) {
+      const tokens = [];
+      for (const value of searchParams.getAll("filter")) {
+        String(value || "").split(",").forEach((part) => {
+          const token = String(part || "").trim();
+          if (token) {
+            tokens.push(token);
+          }
+        });
+      }
+      return tokens;
+    }
+
     function parseExtraTokensField() {
       const raw = document.getElementById("extraTokens").value.trim();
       if (!raw) return [];
-      let tokenStr = raw;
+      let tokens = [];
       if (raw.startsWith("http://") || raw.startsWith("https://")) {
         try {
           const u = new URL(raw);
-          tokenStr = u.searchParams.get("filter") || "";
+          tokens = extractFilterTokensFromSearchParams(u.searchParams);
         } catch (_err) {
-          tokenStr = raw;
+          tokens = raw.split(",");
         }
       } else if (raw.startsWith("?") || raw.includes("filter=")) {
         const qs = new URLSearchParams(raw.replace(/^\?/, ""));
-        tokenStr = qs.get("filter") || "";
+        tokens = extractFilterTokensFromSearchParams(qs);
+      } else {
+        tokens = raw.split(",");
       }
-      return tokenStr.split(",").map((x) => x.trim()).filter(Boolean);
+      return tokens.map((x) => x.trim()).filter(Boolean);
     }
 
     function buildFilterTokens() {
@@ -811,7 +826,7 @@
       }
       try {
         const u = new URL(raw);
-        const tok = (u.searchParams.get("filter") || "").trim();
+        const tok = extractFilterTokensFromSearchParams(u.searchParams).join(",");
         document.getElementById("extraTokens").value = tok;
         setMsg("runMsg", "Imported filter tokens from URL.", true);
       } catch (_err) {

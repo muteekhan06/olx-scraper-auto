@@ -81,6 +81,18 @@ def _dedupe_preserve_order(values: List[str]) -> List[str]:
     return out
 
 
+def _split_filter_value(value: str) -> List[str]:
+    return [x.strip().lower() for x in str(value or "").split(",") if x.strip()]
+
+
+def _extract_filter_tokens_from_query(query: str) -> List[str]:
+    tokens: List[str] = []
+    for key, value in parse_qsl(query, keep_blank_values=True):
+        if key == "filter":
+            tokens.extend(_split_filter_value(value))
+    return tokens
+
+
 def parse_filter_tokens(raw: str) -> List[str]:
     """
     Parse OLX filter tokens from:
@@ -95,13 +107,13 @@ def parse_filter_tokens(raw: str) -> List[str]:
     candidate = raw
     if raw.startswith("http://") or raw.startswith("https://"):
         split = urlsplit(raw)
-        params = dict(parse_qsl(split.query, keep_blank_values=True))
-        candidate = params.get("filter", "")
+        tokens = _extract_filter_tokens_from_query(split.query)
+        candidate = ",".join(tokens)
     elif raw.startswith("?") or "filter=" in raw:
-        params = dict(parse_qsl(raw.lstrip("?"), keep_blank_values=True))
-        candidate = params.get("filter", "")
+        tokens = _extract_filter_tokens_from_query(raw.lstrip("?"))
+        candidate = ",".join(tokens)
 
-    tokens = [x.strip().lower() for x in candidate.split(",") if x.strip()]
+    tokens = _split_filter_value(candidate)
     clean = [x for x in tokens if re.fullmatch(r"[a-z0-9][a-z0-9_-]*", x)]
     return _dedupe_preserve_order(clean)
 
@@ -115,13 +127,13 @@ def build_list_page_url(base_url: str, page: int, extra_filter_tokens: Optional[
     existing_tokens: List[str] = []
     for key, value in pairs:
         if key == "filter":
-            existing_tokens.extend([x.strip().lower() for x in value.split(",") if x.strip()])
+            existing_tokens.extend(_split_filter_value(value))
         elif key != "page":
             passthrough.append((key, value))
 
     merged_tokens = _dedupe_preserve_order(existing_tokens + list(extra_filter_tokens or []))
-    if merged_tokens:
-        passthrough.append(("filter", ",".join(merged_tokens)))
+    for token in merged_tokens:
+        passthrough.append(("filter", token))
 
     if page > 1:
         passthrough.append(("page", str(page)))

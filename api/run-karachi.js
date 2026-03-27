@@ -29,30 +29,45 @@ function clampInt(value, min, max, fallback) {
   return Math.max(min, Math.min(max, n));
 }
 
+function extractTokensFromSearchParams(searchParams) {
+  const tokens = [];
+  for (const value of searchParams.getAll("filter")) {
+    for (const part of String(value || "").split(",")) {
+      const token = String(part || "").trim().toLowerCase();
+      if (token) {
+        tokens.push(token);
+      }
+    }
+  }
+  return tokens;
+}
+
 function normalizeFilterTokens(rawInput) {
   const raw = String(rawInput || "").trim();
   if (!raw) {
     return "";
   }
 
-  let tokenString = raw;
+  let parts = [];
   if (/^https?:\/\//i.test(raw)) {
     try {
       const u = new URL(raw);
-      tokenString = u.searchParams.get("filter") || "";
+      parts = extractTokensFromSearchParams(u.searchParams);
     } catch (_err) {
       throw new Error("Invalid custom URL provided for filter parsing.");
     }
   } else if (raw.startsWith("?")) {
     const qp = new URLSearchParams(raw.slice(1));
-    tokenString = qp.get("filter") || "";
+    parts = extractTokensFromSearchParams(qp);
   } else if (raw.includes("filter=")) {
     const qp = new URLSearchParams(raw.replace(/^\?/, ""));
-    tokenString = qp.get("filter") || "";
+    parts = extractTokensFromSearchParams(qp);
+  } else {
+    parts = raw.split(",");
   }
 
   const tokens = [];
-  for (const part of tokenString.split(",")) {
+  for (const part of parts) {
     const token = String(part || "").trim().toLowerCase();
     if (!token) {
       continue;
