@@ -9,6 +9,8 @@ import os
 from datetime import date
 from typing import Dict, List
 
+import pandas as pd
+
 from app.config import OUTPUT_CONFIG
 
 
@@ -155,4 +157,36 @@ def export_to_json(data: List[Dict], filename: str = None) -> str:
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(cleaned_data, f, ensure_ascii=False, indent=2)
     
+    return filepath
+
+
+def export_to_xlsx(data: List[Dict], filename: str = None) -> str:
+    """
+    Export data to XLSX file.
+
+    Args:
+        data: List of dictionaries to export
+        filename: Optional custom filename (without extension)
+
+    Returns:
+        Path to the created XLSX file
+    """
+    ensure_dir(OUTPUT_CONFIG.OUTPUT_DIR)
+
+    if not filename:
+        today = date.today().isoformat()
+        filename = f"olx_lahore_{today}"
+
+    filepath = os.path.join(OUTPUT_CONFIG.OUTPUT_DIR, f"{filename}.xlsx")
+
+    cleaned_data = [clean_record(row) for row in data]
+    columns = get_ordered_columns(cleaned_data)
+
+    if not columns or not cleaned_data:
+        return filepath
+
+    ordered_rows = [{col: row.get(col, "") for col in columns} for row in cleaned_data]
+    df = pd.DataFrame(ordered_rows, columns=columns)
+    df.to_excel(filepath, index=False)
+
     return filepath

@@ -16,12 +16,21 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # Import scraper and exporter functions
 from app.scraper import scrape_listings
 from app.contact_fetcher import fetch_contacts
-from app.exporter import export_to_tsv, export_to_json, ensure_dir
+from app.exporter import export_to_json, export_to_tsv, export_to_xlsx
 from app.google_sheets import is_google_sheets_configured, export_to_google_sheets
 from app.config import OUTPUT_CONFIG
 
 def log(msg):
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", flush=True)
+
+
+def build_export_filename(locations, custom_search_url):
+    date_stamp = datetime.now().strftime("%Y-%m-%d")
+    if custom_search_url:
+        suffix = "custom_search"
+    else:
+        suffix = (locations or "all").strip().lower().replace(",", "_").replace(" ", "_")
+    return f"olx_{suffix}_{date_stamp}"
 
 def send_notification(status_type, stats=None, error=None):
     """Send a premium notification to Discord."""
@@ -152,9 +161,10 @@ def main():
         
         # 3. Export to Files
         log("Phase 3: Exporting Data")
-        timestamp = datetime.now().strftime("%Y-%m-%d")
-        filename = f"olx_cloud_{timestamp}"
+        filename = build_export_filename(LOCATIONS, CUSTOM_SEARCH_URL)
         export_to_tsv(listings, filename)
+        export_to_json(listings, filename)
+        export_to_xlsx(listings, filename)
         
         # 4. Export to Google Sheets
         if is_google_sheets_configured():

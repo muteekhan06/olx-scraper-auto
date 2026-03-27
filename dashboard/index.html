@@ -363,6 +363,19 @@
       min-height: 42px;
     }
 
+    .action-links {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .action-links .muted {
+      color: var(--ink-soft);
+      font-size: 0.77rem;
+      font-weight: 700;
+    }
+
     .runs-card {
       position: sticky;
       top: 16px;
@@ -630,7 +643,7 @@
                   <th>Conclusion</th>
                   <th>Title</th>
                   <th>Actor</th>
-                  <th>Link</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="runsTable"></tbody>
@@ -967,14 +980,31 @@
           tr.appendChild(cell(r.conclusion || "-"));
           tr.appendChild(cell(r.display_title || ""));
           tr.appendChild(cell(r.actor || ""));
-          const linkTd = document.createElement("td");
-          const a = document.createElement("a");
-          a.href = r.html_url;
-          a.target = "_blank";
-          a.rel = "noopener noreferrer";
-          a.textContent = "Open";
-          linkTd.appendChild(a);
-          tr.appendChild(linkTd);
+          const actionsTd = document.createElement("td");
+          const actions = document.createElement("div");
+          actions.className = "action-links";
+
+          const openLink = document.createElement("a");
+          openLink.href = r.html_url;
+          openLink.target = "_blank";
+          openLink.rel = "noopener noreferrer";
+          openLink.textContent = "Open Run";
+          actions.appendChild(openLink);
+
+          if (r.xlsx_available && r.xlsx_download_url) {
+            const xlsxLink = document.createElement("a");
+            xlsxLink.href = r.xlsx_download_url;
+            xlsxLink.textContent = "Download XLSX";
+            actions.appendChild(xlsxLink);
+          } else {
+            const muted = document.createElement("span");
+            muted.className = "muted";
+            muted.textContent = "XLSX not available";
+            actions.appendChild(muted);
+          }
+
+          actionsTd.appendChild(actions);
+          tr.appendChild(actionsTd);
           tbody.appendChild(tr);
         });
       } catch (err) {

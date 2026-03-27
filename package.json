@@ -1,0 +1,7 @@
+{
+  "name": "olxify-karachi-dashboard",
+  "private": true,
+  "dependencies": {
+    "adm-zip": "^0.5.16"
+  }
+}
