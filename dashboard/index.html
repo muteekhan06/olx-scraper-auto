@@ -694,6 +694,20 @@
       ["Assembly: Local", "assembly_eq_local"], ["Assembly: Imported", "assembly_eq_imported"],
       ["Price Type: Call for price", "price_type_eq_requestable"]
     ];
+    const AND_JOIN_PREFIXES = new Set([
+      "body_type_eq_",
+      "features_eq_",
+      "new_used_eq_",
+      "petrol_eq_",
+      "registration_city_eq_"
+    ]);
+    const SINGLE_VALUE_PREFIXES = new Set([
+      "assembly_eq_",
+      "documents_eq_",
+      "make_eq_",
+      "price_type_eq_",
+      "transmission_eq_"
+    ]);
 
     function setMsg(id, text, ok) {
       const el = document.getElementById(id);
@@ -714,6 +728,68 @@
         if (!out.includes(x)) out.push(x);
       }
       return out;
+    }
+
+    function splitEqToken(token) {
+      const match = cleanToken(token).match(/^([a-z0-9_]+_eq_)([a-z0-9_-]+)$/);
+      return match ? { prefix: match[1], value: match[2] } : null;
+    }
+
+    function getSingleSelectPrefix(token) {
+      const split = splitEqToken(token);
+      if (!split) return "";
+      return SINGLE_VALUE_PREFIXES.has(split.prefix) ? split.prefix : "";
+    }
+
+    function normalizeOlxFilterTokens(tokens) {
+      const ordered = dedupeTokens(tokens);
+      const output = [];
+      const positions = new Map();
+      const andGroups = new Map();
+
+      ordered.forEach((token) => {
+        const split = splitEqToken(token);
+        if (!split) {
+          output.push(token);
+          return;
+        }
+
+        if (AND_JOIN_PREFIXES.has(split.prefix)) {
+          if (!positions.has(split.prefix)) {
+            positions.set(split.prefix, output.length);
+            output.push("");
+            andGroups.set(split.prefix, []);
+          }
+          split.value.split("_and_").forEach((value) => {
+            if (!value) return;
+            const values = andGroups.get(split.prefix);
+            if (!values.includes(value)) {
+              values.push(value);
+            }
+          });
+          return;
+        }
+
+        if (SINGLE_VALUE_PREFIXES.has(split.prefix)) {
+          if (!positions.has(split.prefix)) {
+            positions.set(split.prefix, output.length);
+            output.push(token);
+          } else {
+            output[positions.get(split.prefix)] = token;
+          }
+          return;
+        }
+
+        output.push(token);
+      });
+
+      andGroups.forEach((values, prefix) => {
+        if (values.length) {
+          output[positions.get(prefix)] = prefix + values.join("_and_");
+        }
+      });
+
+      return output.filter(Boolean);
     }
 
     function areaSelection() {
@@ -738,7 +814,7 @@
       const root = document.getElementById(rootId);
       root.innerHTML = options.map((x) => (
         '<label class="chip-box">' +
-        '<input type="checkbox" class="' + className + '" value="' + x[1] + '" />' +
+        '<input type="checkbox" class="' + className + '" value="' + x[1] + '" data-single-prefix="' + getSingleSelectPrefix(x[1]) + '" />' +
         '<span>' + x[0] + '</span>' +
         '</label>'
       )).join("");
@@ -813,7 +889,7 @@
       tokens.push(...gatherCheckedTokens("tok-other"));
       tokens.push(...parseExtraTokensField());
 
-      const finalTokens = dedupeTokens(tokens);
+      const finalTokens = normalizeOlxFilterTokens(tokens);
       document.getElementById("tokenPreview").textContent = finalTokens.join(",");
       return finalTokens.join(",");
     }
@@ -850,7 +926,17 @@
         document.getElementById(id).addEventListener("input", buildFilterTokens);
       });
       document.querySelectorAll(".tok-brand,.tok-condition,.tok-fuel,.tok-trans,.tok-body,.tok-feature,.tok-reg,.tok-other")
-        .forEach((x) => x.addEventListener("change", buildFilterTokens));
+        .forEach((x) => x.addEventListener("change", (event) => {
+          const prefix = event.target.dataset.singlePrefix || "";
+          if (event.target.checked && prefix) {
+            document.querySelectorAll('input[data-single-prefix="' + prefix + '"]').forEach((input) => {
+              if (input !== event.target) {
+                input.checked = false;
+              }
+            });
+          }
+          buildFilterTokens();
+        }));
     }
 
     function initializeFilterControls() {

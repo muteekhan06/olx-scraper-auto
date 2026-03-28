@@ -71,6 +71,22 @@ TITLE_FALLBACK_XPATH = (
     " | .//*[contains(@class,'_562a2db2')]"
 )
 
+AND_JOIN_PREFIXES = {
+    "body_type_eq_",
+    "features_eq_",
+    "new_used_eq_",
+    "petrol_eq_",
+    "registration_city_eq_",
+}
+
+SINGLE_VALUE_PREFIXES = {
+    "assembly_eq_",
+    "documents_eq_",
+    "make_eq_",
+    "price_type_eq_",
+    "transmission_eq_",
+}
+
 
 def _dedupe_preserve_order(values: List[str]) -> List[str]:
     out: List[str] = []
@@ -91,6 +107,53 @@ def _extract_filter_tokens_from_query(query: str) -> List[str]:
         if key == "filter":
             tokens.extend(_split_filter_value(value))
     return tokens
+
+
+def _split_eq_token(token: str) -> Optional[Tuple[str, str]]:
+    match = re.fullmatch(r"([a-z0-9_]+_eq_)([a-z0-9_-]+)", token)
+    if not match:
+        return None
+    return match.group(1), match.group(2)
+
+
+def normalize_olx_filter_tokens(tokens: List[str]) -> List[str]:
+    ordered = _dedupe_preserve_order(tokens)
+    output: List[Optional[str]] = []
+    positions: Dict[str, int] = {}
+    and_groups: Dict[str, List[str]] = {}
+
+    for token in ordered:
+        split_token = _split_eq_token(token)
+        if not split_token:
+            output.append(token)
+            continue
+
+        prefix, raw_value = split_token
+        if prefix in AND_JOIN_PREFIXES:
+            if prefix not in positions:
+                positions[prefix] = len(output)
+                output.append(None)
+                and_groups[prefix] = []
+            for value in raw_value.split("_and_"):
+                if value and value not in and_groups[prefix]:
+                    and_groups[prefix].append(value)
+            continue
+
+        if prefix in SINGLE_VALUE_PREFIXES:
+            if prefix not in positions:
+                positions[prefix] = len(output)
+                output.append(token)
+            else:
+                output[positions[prefix]] = token
+            continue
+
+        output.append(token)
+
+    for prefix, values in and_groups.items():
+        if values:
+            output[positions[prefix]] = f"{prefix}{'_and_'.join(values)}"
+
+    return [item for item in output if item]
 
 
 def parse_filter_tokens(raw: str) -> List[str]:
@@ -131,9 +194,9 @@ def build_list_page_url(base_url: str, page: int, extra_filter_tokens: Optional[
         elif key != "page":
             passthrough.append((key, value))
 
-    merged_tokens = _dedupe_preserve_order(existing_tokens + list(extra_filter_tokens or []))
-    for token in merged_tokens:
-        passthrough.append(("filter", token))
+    merged_tokens = normalize_olx_filter_tokens(existing_tokens + list(extra_filter_tokens or []))
+    if merged_tokens:
+        passthrough.append(("filter", ",".join(merged_tokens)))
 
     if page > 1:
         passthrough.append(("page", str(page)))
