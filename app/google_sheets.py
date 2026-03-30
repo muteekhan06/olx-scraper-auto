@@ -1,45 +1,53 @@
 """
-Google Sheets Integration with OAuth2.
-Login once via browser, then fully automated!
+Google Sheets integration.
 
-Setup (One-time, FREE):
-1. Go to https://console.cloud.google.com/
-2. Create a project (or use existing)
-3. Go to APIs & Services > Enable APIs > Enable "Google Sheets API"
-4. Go to APIs & Services > Credentials > Create Credentials > OAuth client ID
-5. Select "Desktop app" as application type
-6. Download the JSON and save as "config/client_secret.json"
-7. Run the script - it will open browser for login ONCE
-8. After that, it's fully automated!
+Supported auth modes:
+1. Service account for unattended automation
+2. OAuth desktop login for local interactive use
 """
 
-import json
 import os
 from datetime import date
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from app.config import OUTPUT_CONFIG, CONFIG_DIR
 
 
 # File paths (in config/ directory)
 CLIENT_SECRET_FILE = os.path.join(CONFIG_DIR, "client_secret.json")
+SERVICE_ACCOUNT_FILE = os.path.join(CONFIG_DIR, "service_account.json")
 TOKEN_FILE = os.path.join(CONFIG_DIR, "google_token.json")
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 
+def get_google_auth_mode() -> str:
+    """Return the configured Google auth mode."""
+    if os.path.exists(SERVICE_ACCOUNT_FILE):
+        return "service_account"
+    if os.path.exists(CLIENT_SECRET_FILE):
+        return "oauth"
+    return "none"
+
+
 def is_google_sheets_configured() -> bool:
-    """Check if Google Sheets OAuth is configured."""
-    return os.path.exists(CLIENT_SECRET_FILE)
+    """Check if Google Sheets auth is configured."""
+    return get_google_auth_mode() != "none"
 
 
 def is_google_sheets_authenticated() -> bool:
-    """Check if we have valid saved tokens."""
-    return os.path.exists(TOKEN_FILE)
+    """Check if the configured auth mode is ready to use."""
+    auth_mode = get_google_auth_mode()
+    if auth_mode == "service_account":
+        return True
+    if auth_mode == "oauth":
+        return os.path.exists(TOKEN_FILE)
+    return False
 
 
 def get_google_credentials():
-    """Get or refresh Google OAuth credentials."""
+    """Get Google Sheets credentials for the configured auth mode."""
     try:
+        from google.oauth2 import service_account
         from google.oauth2.credentials import Credentials
         from google.auth.transport.requests import Request
         from google_auth_oauthlib.flow import InstalledAppFlow
@@ -49,10 +57,22 @@ def get_google_credentials():
             "pip install google-auth google-auth-oauthlib google-auth-httplib2"
         )
     
+    if os.path.exists(SERVICE_ACCOUNT_FILE):
+        try:
+            return service_account.Credentials.from_service_account_file(
+                SERVICE_ACCOUNT_FILE,
+                scopes=SCOPES,
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                f"Service account credentials could not be loaded from {SERVICE_ACCOUNT_FILE}: {exc}"
+            ) from exc
+
     if not os.path.exists(CLIENT_SECRET_FILE):
         raise FileNotFoundError(
-            f"OAuth client file not found: {CLIENT_SECRET_FILE}\n"
-            "Please download it from Google Cloud Console > Credentials > OAuth 2.0 Client IDs"
+            "Google Sheets auth is not configured.\n"
+            f"Preferred for automation: add {SERVICE_ACCOUNT_FILE}.\n"
+            f"Local fallback: add OAuth client file at {CLIENT_SECRET_FILE}."
         )
     
     creds = None
@@ -72,21 +92,21 @@ def get_google_credentials():
                 creds.refresh(Request())
             except Exception:
                 creds = None
-        
+
         if not creds:
             # Check if running in CI/Headless environment
             if os.environ.get("CI") or os.environ.get("HEADLESS"):
                 raise RuntimeError(
-                    "❌ Google Auth Token is missing or invalid!\n"
-                    "Since we are in a headless/CI environment, we cannot open a browser to login.\n"
-                    "Please update your 'GOOGLE_TOKEN_JSON' secret with a fresh, valid token."
+                    "Google OAuth token is missing or invalid in CI/headless mode.\n"
+                    "Preferred fix: configure GOOGLE_SERVICE_ACCOUNT_JSON and share the sheet with that service account.\n"
+                    "Legacy fallback: refresh GOOGLE_TOKEN_JSON with a new browser login."
                 )
 
             # Need fresh login via browser (Local Machine Only)
-            print("🔄 Initiating Google Login via Browser...")
+            print("Initiating Google login via browser...")
             flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
             creds = flow.run_local_server(port=0, open_browser=True)
-        
+
         # Save token for next time
         with open(TOKEN_FILE, "w") as f:
             f.write(creds.to_json())

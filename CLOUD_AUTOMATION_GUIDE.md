@@ -59,13 +59,15 @@ To get a "Ding!" on your phone when new leads arrive, we use Discord. It is fast
 3.  **Add Secrets (The Most Important Step)**:
     *   Go to your Repo Settings -> **Secrets and variables** -> **Actions**.
     *   Click **New repository secret**.
-    *   Add these 4 secrets EXACTLY as written below:
+    *   Preferred setup: use a service account for Google Sheets automation.
+    *   Legacy OAuth secrets are optional fallback only.
 
 | Secret Name | Value to Paste |
 | :--- | :--- |
 | `GOOGLE_SHEET_ID` | The ID you saved in Part 1. |
-| `GOOGLE_CLIENT_SECRET` | Content of `config/client_secret.json`. |
-| `GOOGLE_TOKEN_JSON` | Content of `config/google_token.json`. |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | Full JSON key for your Google service account. |
+| `GOOGLE_CLIENT_SECRET` | Optional legacy fallback: content of `config/client_secret.json`. |
+| `GOOGLE_TOKEN_JSON` | Optional legacy fallback: content of `config/google_token.json`. |
 | `DISCORD_WEBHOOK_URL` | The URL you copied in Part 2. |
 | `KARACHI_SHEET_ID` | **(NEW)** The ID of your Karachi Google Sheet. |
 

@@ -32,11 +32,22 @@ jobs:
           pip install -r requirements.txt
       
       - name: Create Auth Config Files
-        # Use single quotes to prevent bash from stripping the double quotes inside the JSON
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p config
-          echo '${{ secrets.GOOGLE_CLIENT_SECRET }}' > config/client_secret.json
-          echo '${{ secrets.GOOGLE_TOKEN_JSON }}' > config/google_token.json
+          if [ -n "${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}" ]; then
+            echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}' > config/service_account.json
+            echo "Using Google service account credentials."
+          else
+            if [ -n "${{ secrets.GOOGLE_CLIENT_SECRET }}" ]; then
+              echo '${{ secrets.GOOGLE_CLIENT_SECRET }}' > config/client_secret.json
+            fi
+            if [ -n "${{ secrets.GOOGLE_TOKEN_JSON }}" ]; then
+              echo '${{ secrets.GOOGLE_TOKEN_JSON }}' > config/google_token.json
+            fi
+            echo "Using legacy Google OAuth credentials."
+          fi
 
       - name: Run Scraper
         env:
