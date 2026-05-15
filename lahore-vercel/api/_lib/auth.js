@@ -172,7 +172,7 @@ function getGithubConfig(tokenOverride = "") {
   const owner = (process.env.GITHUB_OWNER || "muteekhan06").trim();
   const repo = (process.env.GITHUB_REPO || "olx-scraper-auto").trim();
   const token = (String(tokenOverride || "") || (process.env.GITHUB_PAT || "")).trim();
-  const workflowFile = "daily_scrape.yml";
+  const workflowFile = "lahore_daily_scrape.yml";
   const ref = (process.env.LAHORE_WORKFLOW_REF || "main").trim();
   return { owner, repo, token, workflowFile, ref };
 }
