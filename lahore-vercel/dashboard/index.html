@@ -679,17 +679,29 @@
       ["Proton", "make_eq_proton"], ["Prince", "make_eq_prince"], ["Subaru", "make_eq_subaru"],
       ["Volkswagen", "make_eq_volkswagen"], ["DFSK", "make_eq_dfsk"], ["Audi", "make_eq_audi"],
       ["Tesla", "make_eq_tesla"], ["FAW", "make_eq_faw"], ["Chevrolet", "make_eq_chevrolet"],
-      ["Isuzu", "make_eq_cars-isuzu"], ["Other Brands", "make_eq_cars-other"], ["BMW", "make_eq_bmw"],
+      ["Isuzu", "make_eq_cars-isuzu"], ["BMW", "make_eq_bmw"],
       ["Chery", "make_eq_chery"], ["Peugeot", "make_eq_peugeot"], ["JAC", "make_eq_jac"],
-      ["Ford", "make_eq_ford"], ["Range Rover", "make_eq_range-rover"], ["JW Forland", "make_eq_jw-fortland"]
+      ["Ford", "make_eq_ford"], ["Range Rover", "make_eq_range-rover"], ["JW Forland", "make_eq_jw-fortland"],
+      ["Jaecoo", "make_eq_jaecoo"], ["Mazda", "make_eq_mazda"], ["United", "make_eq_cars-united"],
+      ["BYD", "make_eq_byd"], ["Lexus", "make_eq_lexus"], ["Datsun", "make_eq_datsun"],
+      ["BAIC", "make_eq_baic"], ["Daewoo", "make_eq_daewoo"], ["Adam", "make_eq_adam"],
+      ["Land Rover", "make_eq_land-rover"], ["Deepal", "make_eq_deepal"], ["Jeep", "make_eq_jeep"],
+      ["Fiat", "make_eq_fiat"], ["Ssangyong", "make_eq_ssangyong"], ["Jetour", "make_eq_jetour"],
+      ["Porsche", "make_eq_porsche"], ["Inverex", "make_eq_inverex"], ["Cadillac", "make_eq_cadilac"],
+      ["Seres", "make_eq_seres"], ["Dongfeng", "make_eq_dongfeng"], ["Other Brands", "make_eq_cars-other"]
     ];
     const CONDITION_OPTIONS = [["Used", "new_used_eq_used"], ["New", "new_used_eq_new"]];
-    const FUEL_OPTIONS = [["Petrol", "petrol_eq_petrol"], ["Hybrid", "petrol_eq_hybrid"], ["Diesel", "petrol_eq_diesel"], ["Electric", "petrol_eq_electric"], ["LPG", "petrol_eq_lpg"], ["CNG", "petrol_eq_cng"]];
+    const FUEL_OPTIONS = [
+      ["Petrol", "petrol_eq_petrol"], ["Hybrid", "petrol_eq_hybrid"], ["Diesel", "petrol_eq_diesel"],
+      ["LPG", "petrol_eq_lpg"], ["Electric", "petrol_eq_electric"], ["PHEV", "petrol_eq_phev"],
+      ["CNG", "petrol_eq_cng"], ["REEV", "petrol_eq_reev"]
+    ];
     const TRANSMISSION_OPTIONS = [["Automatic", "transmission_eq_automatic"], ["Manual", "transmission_eq_manual"]];
     const BODY_OPTIONS = [
-      ["Sedan", "body_type_eq_3"], ["Hatchback", "body_type_eq_4"], ["SUV", "body_type_eq_5"], ["Other", "body_type_eq_6"],
-      ["Small city car", "body_type_eq_11"], ["Pickup", "body_type_eq_10"], ["Convertible", "body_type_eq_2"],
-      ["Van / Bus", "body_type_eq_7"], ["MPV", "body_type_eq_9"], ["Sports / Coupe", "body_type_eq_1"]
+      ["Sedan", "body_type_eq_3"], ["Hatchback", "body_type_eq_4"], ["SUV", "body_type_eq_5"],
+      ["Other", "body_type_eq_6"], ["Small city car", "body_type_eq_11"], ["Van / Bus", "body_type_eq_7"],
+      ["Convertible", "body_type_eq_2"], ["Pickup", "body_type_eq_10"], ["MPV", "body_type_eq_9"],
+      ["Estate", "body_type_eq_8"], ["Sports / Coupe", "body_type_eq_1"]
     ];
     const COLOR_OPTIONS = [
       ["White", "color_eq_white"], ["Silver", "color_eq_silver"], ["Black", "color_eq_black"],
@@ -704,14 +716,44 @@
     const FEATURE_OPTIONS = [
       ["Power Steering", "features_eq_20"], ["Power Windows", "features_eq_21"], ["Power Mirrors", "features_eq_19"],
       ["ABS", "features_eq_1"], ["Airbags", "features_eq_2"], ["AM/FM Radio", "features_eq_5"],
-      ["Bluetooth System", "features_eq_31"], ["Touch Screen", "features_eq_39"]
+      ["Bluetooth System", "features_eq_31"], ["Touch Screen", "features_eq_39"],
+      ["Front Speakers", "features_eq_12"], ["USB Charger", "features_eq_28"],
+      ["Rear Camera", "features_eq_22"], ["Keyless Entry", "features_eq_15"],
+      ["Navigation System", "features_eq_18"], ["Cruise Control", "features_eq_8"],
+      ["Rear Speakers", "features_eq_23"], ["Climate Control", "features_eq_7"],
+      ["Alloy Rims", "features_eq_3"], ["Immobilizer Key", "features_eq_14"],
+      ["Fog Lights", "features_eq_10"], ["Rear AC Vents", "features_eq_22"],
+      ["Sun Roof", "features_eq_25"], ["CD Player", "features_eq_6"],
+      ["Steering Switches", "features_eq_24"], ["Rear Wiper", "features_eq_35"],
+      ["Cool Box", "features_eq_36"], ["Heated Seats", "features_eq_13"],
+      ["DVD Player", "features_eq_9"], ["Front Camera", "features_eq_11"]
     ];
     const REG_CITY_OPTIONS = [
-      ["Lahore", "registration_city_eq_lahore"], ["Punjab", "registration_city_eq_punjab"], ["Unregistered", "registration_city_eq_unregistered"],
-      ["Islamabad", "registration_city_eq_islamabad"], ["Sindh", "registration_city_eq_sindh"], ["Karachi", "registration_city_eq_karachi"],
-      ["Multan", "registration_city_eq_multan"], ["Rawalpindi", "registration_city_eq_rawalpindi"], ["Ali Masjid", "registration_city_eq_alimasjid"],
-      ["Faisalabad", "registration_city_eq_faisalabad"], ["Gujranwala", "registration_city_eq_gujranwala"],
-      ["Okara", "registration_city_eq_okara"], ["Sahiwal", "registration_city_eq_sahiwal"]
+      ["Lahore", "registration_city_eq_lahore"], ["Punjab", "registration_city_eq_punjab"],
+      ["Islamabad", "registration_city_eq_islamabad"], ["Unregistered", "registration_city_eq_unregistered"],
+      ["Sindh", "registration_city_eq_sindh"], ["Karachi", "registration_city_eq_karachi"],
+      ["Multan", "registration_city_eq_multan"], ["Faisalabad", "registration_city_eq_faisalabad"],
+      ["Gujranwala", "registration_city_eq_gujranwala"], ["Rawalpindi", "registration_city_eq_rawalpindi"],
+      ["Sialkot", "registration_city_eq_sialkot"], ["Sahiwal", "registration_city_eq_sahiwal"],
+      ["Rahimyar Khan", "registration_city_eq_rahimyarkhan"], ["Sheikhupura", "registration_city_eq_shekhupura"],
+      ["Abbottabad", "registration_city_eq_abbottabad"], ["Bahawalpur", "registration_city_eq_bahawalpur"],
+      ["Kasur", "registration_city_eq_kasur-punjab"], ["Peshawar", "registration_city_eq_peshawar"],
+      ["Gujrat", "registration_city_eq_gujrat"], ["Okara", "registration_city_eq_okara"],
+      ["Sargodha", "registration_city_eq_sargodha"], ["Muzaffarabad", "registration_city_eq_muzaffarabad"],
+      ["Vehari", "registration_city_eq_vehari"], ["Attock", "registration_city_eq_attock"],
+      ["Bahawalnagar", "registration_city_eq_bahawalnagar"], ["Mirpur", "registration_city_eq_mirpur"],
+      ["Dera Ismail Khan", "registration_city_eq_deraismailkhan"], ["Kamoke", "registration_city_eq_kamoke"],
+      ["Khanewal", "registration_city_eq_khanewal"], ["Pakpattan", "registration_city_eq_pakpattan"],
+      ["Quetta", "registration_city_eq_quetta"], ["Ali Masjid", "registration_city_eq_alimasjid"],
+      ["Badin", "registration_city_eq_badin"], ["Bagh", "registration_city_eq_bagh"],
+      ["Bannu", "registration_city_eq_bannu"], ["Bhimber", "registration_city_eq_bhimber"],
+      ["Buner", "registration_city_eq_buner"], ["Burewala", "registration_city_eq_burewala"],
+      ["Charsadda", "registration_city_eq_charsadda"], ["Dera Ghazi Khan", "registration_city_eq_deraghazikhan"],
+      ["Gilgit", "registration_city_eq_gilgit"], ["Hyderabad", "registration_city_eq_hyderabad"],
+      ["Jhang Sadar", "registration_city_eq_jhangsadar"], ["Jhelum", "registration_city_eq_jhelum"],
+      ["Larkana", "registration_city_eq_larkana"], ["Mandi Bahauddin", "registration_city_eq_mandi-bahauddin"],
+      ["Nowshera", "registration_city_eq_nowshera"], ["Sukkur", "registration_city_eq_sukkar"],
+      ["Toba Tek Singh", "registration_city_eq_tobateksingh"]
     ];
     const OTHER_OPTIONS = [
       ["Documents: Original", "documents_eq_original"], ["Documents: Duplicate", "documents_eq_duplicate"],
