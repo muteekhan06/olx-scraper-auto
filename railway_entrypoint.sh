@@ -10,6 +10,16 @@ if [ ! -z "$GOOGLE_CLIENT_SECRET_CONTENT" ]; then
     echo "$GOOGLE_CLIENT_SECRET_CONTENT" > config/client_secret.json
 fi
 
+if [ ! -z "$GOOGLE_SERVICE_ACCOUNT_JSON" ]; then
+    echo "Writing service_account.json from GOOGLE_SERVICE_ACCOUNT_JSON..."
+    echo "$GOOGLE_SERVICE_ACCOUNT_JSON" > config/service_account.json
+fi
+
+if [ ! -z "$GOOGLE_SERVICE_ACCOUNT_CONTENT" ]; then
+    echo "Writing service_account.json from GOOGLE_SERVICE_ACCOUNT_CONTENT..."
+    echo "$GOOGLE_SERVICE_ACCOUNT_CONTENT" > config/service_account.json
+fi
+
 if [ ! -z "$GOOGLE_TOKEN_CONTENT" ]; then
     echo "Writing google_token.json from environment variable..."
     echo "$GOOGLE_TOKEN_CONTENT" > config/google_token.json

@@ -27,6 +27,8 @@ Use this for GitHub Actions and any unattended run. It replaces the weekly `GOOG
 - Lahore daily workflow will use the service account automatically.
 - Karachi manual workflow will use the service account automatically.
 - `GOOGLE_CLIENT_SECRET` and `GOOGLE_TOKEN_JSON` become legacy fallback only.
+- Local/server runs can use either `config/service_account.json` or a `GOOGLE_SERVICE_ACCOUNT_JSON` environment variable containing the full service account JSON.
+- You do not need to regenerate `config/google_token.json` weekly after the workflow secret is configured.
 
 ## Important
 

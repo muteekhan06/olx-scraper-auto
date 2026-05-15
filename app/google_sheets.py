@@ -6,6 +6,7 @@ Supported auth modes:
 2. OAuth desktop login for local interactive use
 """
 
+import json
 import os
 from datetime import date
 from typing import Dict, List
@@ -18,11 +19,35 @@ CLIENT_SECRET_FILE = os.path.join(CONFIG_DIR, "client_secret.json")
 SERVICE_ACCOUNT_FILE = os.path.join(CONFIG_DIR, "service_account.json")
 TOKEN_FILE = os.path.join(CONFIG_DIR, "google_token.json")
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+SERVICE_ACCOUNT_ENV = "GOOGLE_SERVICE_ACCOUNT_JSON"
+
+
+def _load_service_account_info():
+    """Load service account JSON from env or file, if configured."""
+    raw = os.environ.get(SERVICE_ACCOUNT_ENV, "").strip()
+    if raw:
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(
+                f"{SERVICE_ACCOUNT_ENV} is set but is not valid JSON: {exc}"
+            ) from exc
+
+    if os.path.exists(SERVICE_ACCOUNT_FILE):
+        try:
+            with open(SERVICE_ACCOUNT_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as exc:
+            raise RuntimeError(
+                f"Service account credentials could not be loaded from {SERVICE_ACCOUNT_FILE}: {exc}"
+            ) from exc
+
+    return None
 
 
 def get_google_auth_mode() -> str:
     """Return the configured Google auth mode."""
-    if os.path.exists(SERVICE_ACCOUNT_FILE):
+    if os.environ.get(SERVICE_ACCOUNT_ENV, "").strip() or os.path.exists(SERVICE_ACCOUNT_FILE):
         return "service_account"
     if os.path.exists(CLIENT_SECRET_FILE):
         return "oauth"
@@ -57,21 +82,22 @@ def get_google_credentials():
             "pip install google-auth google-auth-oauthlib google-auth-httplib2"
         )
     
-    if os.path.exists(SERVICE_ACCOUNT_FILE):
+    service_account_info = _load_service_account_info()
+    if service_account_info:
         try:
-            return service_account.Credentials.from_service_account_file(
-                SERVICE_ACCOUNT_FILE,
+            return service_account.Credentials.from_service_account_info(
+                service_account_info,
                 scopes=SCOPES,
             )
         except Exception as exc:
             raise RuntimeError(
-                f"Service account credentials could not be loaded from {SERVICE_ACCOUNT_FILE}: {exc}"
+                f"Service account credentials could not be initialized: {exc}"
             ) from exc
 
     if not os.path.exists(CLIENT_SECRET_FILE):
         raise FileNotFoundError(
             "Google Sheets auth is not configured.\n"
-            f"Preferred for automation: add {SERVICE_ACCOUNT_FILE}.\n"
+            f"Preferred for automation: set {SERVICE_ACCOUNT_ENV} or add {SERVICE_ACCOUNT_FILE}.\n"
             f"Local fallback: add OAuth client file at {CLIENT_SECRET_FILE}."
         )
     
@@ -169,8 +195,8 @@ def export_to_google_sheets(
 ) -> str:
     """
     Export data directly to Google Sheets.
-    First time: Opens browser for Google login.
-    After that: Fully automated!
+    Service account auth is preferred for unattended automation.
+    OAuth desktop auth is retained for local interactive use.
     
     Args:
         data: List of dictionaries to export
