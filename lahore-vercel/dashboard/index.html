@@ -564,6 +564,15 @@
               </label>
             </div>
 
+            <div class="grid">
+              <label>Engine Capacity Min (cc)
+                <input id="engineMin" type="number" min="0" placeholder="1000" />
+              </label>
+              <label>Engine Capacity Max (cc)
+                <input id="engineMax" type="number" min="0" placeholder="2000" />
+              </label>
+            </div>
+
             <div class="group">
               <h3>Brand</h3>
               <div id="brandChecks" class="grid"></div>
@@ -587,6 +596,11 @@
             <div class="group">
               <h3>Body Type</h3>
               <div id="bodyChecks" class="grid"></div>
+            </div>
+
+            <div class="group">
+              <h3>Exterior Color</h3>
+              <div id="colorChecks" class="grid"></div>
             </div>
 
             <div class="group">
@@ -670,12 +684,22 @@
       ["Ford", "make_eq_ford"], ["Range Rover", "make_eq_range-rover"], ["JW Forland", "make_eq_jw-fortland"]
     ];
     const CONDITION_OPTIONS = [["Used", "new_used_eq_used"], ["New", "new_used_eq_new"]];
-    const FUEL_OPTIONS = [["Petrol", "petrol_eq_petrol"], ["Hybrid", "petrol_eq_hybrid"], ["Diesel", "petrol_eq_diesel"], ["Electric", "petrol_eq_electric"], ["LPG", "petrol_eq_lpg"]];
+    const FUEL_OPTIONS = [["Petrol", "petrol_eq_petrol"], ["Hybrid", "petrol_eq_hybrid"], ["Diesel", "petrol_eq_diesel"], ["Electric", "petrol_eq_electric"], ["LPG", "petrol_eq_lpg"], ["CNG", "petrol_eq_cng"]];
     const TRANSMISSION_OPTIONS = [["Automatic", "transmission_eq_automatic"], ["Manual", "transmission_eq_manual"]];
     const BODY_OPTIONS = [
       ["Sedan", "body_type_eq_3"], ["Hatchback", "body_type_eq_4"], ["SUV", "body_type_eq_5"], ["Other", "body_type_eq_6"],
       ["Small city car", "body_type_eq_11"], ["Pickup", "body_type_eq_10"], ["Convertible", "body_type_eq_2"],
       ["Van / Bus", "body_type_eq_7"], ["MPV", "body_type_eq_9"], ["Sports / Coupe", "body_type_eq_1"]
+    ];
+    const COLOR_OPTIONS = [
+      ["White", "color_eq_white"], ["Silver", "color_eq_silver"], ["Black", "color_eq_black"],
+      ["Grey", "color_eq_grey"], ["Blue", "color_eq_blue"], ["Red", "color_eq_red"],
+      ["Maroon", "color_eq_maroon"], ["Beige", "color_eq_beige"], ["Green", "color_eq_green"],
+      ["Brown", "color_eq_brown"], ["Gold", "color_eq_gold"], ["Indigo", "color_eq_indigo"],
+      ["Purple", "color_eq_purple"], ["Yellow", "color_eq_yellow"], ["Turquoise", "color_eq_turquoise"],
+      ["Bronze", "color_eq_bronze"], ["Burgundy", "color_eq_burgundy"], ["Magenta", "color_eq_magenta"],
+      ["Navy", "color_eq_navy"], ["Orange", "color_eq_orange"], ["Pink", "color_eq_pink"],
+      ["Unlisted", "color_eq_unlisted"]
     ];
     const FEATURE_OPTIONS = [
       ["Power Steering", "features_eq_20"], ["Power Windows", "features_eq_21"], ["Power Mirrors", "features_eq_19"],
@@ -699,7 +723,8 @@
       "features_eq_",
       "new_used_eq_",
       "petrol_eq_",
-      "registration_city_eq_"
+      "registration_city_eq_",
+      "color_eq_"
     ]);
     const SINGLE_VALUE_PREFIXES = new Set([
       "assembly_eq_",
@@ -878,12 +903,22 @@
       if (kmMin) tokens.push("mileage_min_" + kmMin);
       if (kmMax) tokens.push("mileage_max_" + kmMax);
 
+      const engineMin = document.getElementById("engineMin").value.trim();
+      const engineMax = document.getElementById("engineMax").value.trim();
+      if (engineMin && engineMax) {
+        tokens.push("engine_capacity_between_" + engineMin + "_to_" + engineMax);
+      } else {
+        if (engineMin) tokens.push("engine_capacity_min_" + engineMin);
+        if (engineMax) tokens.push("engine_capacity_max_" + engineMax);
+      }
+
       tokens.push(...parseYearRangeToken());
       tokens.push(...gatherCheckedTokens("tok-brand"));
       tokens.push(...gatherCheckedTokens("tok-condition"));
       tokens.push(...gatherCheckedTokens("tok-fuel"));
       tokens.push(...gatherCheckedTokens("tok-trans"));
       tokens.push(...gatherCheckedTokens("tok-body"));
+      tokens.push(...gatherCheckedTokens("tok-color"));
       tokens.push(...gatherCheckedTokens("tok-feature"));
       tokens.push(...gatherCheckedTokens("tok-reg"));
       tokens.push(...gatherCheckedTokens("tok-other"));
@@ -913,19 +948,19 @@
 
     function clearAllFilters() {
       [
-        "priceMin", "priceMax", "kmMin", "kmMax", "yearRange", "extraTokens", "importUrl"
+        "priceMin", "priceMax", "kmMin", "kmMax", "yearRange", "engineMin", "engineMax", "extraTokens", "importUrl"
       ].forEach((id) => { document.getElementById(id).value = ""; });
-      document.querySelectorAll(".tok-brand,.tok-condition,.tok-fuel,.tok-trans,.tok-body,.tok-feature,.tok-reg,.tok-other")
+      document.querySelectorAll(".tok-brand,.tok-condition,.tok-fuel,.tok-trans,.tok-body,.tok-color,.tok-feature,.tok-reg,.tok-other")
         .forEach((x) => { x.checked = false; });
       buildFilterTokens();
     }
 
     function bindFilterPreview() {
-      const ids = ["priceMin", "priceMax", "kmMin", "kmMax", "yearRange", "extraTokens"];
+      const ids = ["priceMin", "priceMax", "kmMin", "kmMax", "yearRange", "engineMin", "engineMax", "extraTokens"];
       ids.forEach((id) => {
         document.getElementById(id).addEventListener("input", buildFilterTokens);
       });
-      document.querySelectorAll(".tok-brand,.tok-condition,.tok-fuel,.tok-trans,.tok-body,.tok-feature,.tok-reg,.tok-other")
+      document.querySelectorAll(".tok-brand,.tok-condition,.tok-fuel,.tok-trans,.tok-body,.tok-feature,.tok-reg,.tok-other,.tok-color")
         .forEach((x) => x.addEventListener("change", (event) => {
           const prefix = event.target.dataset.singlePrefix || "";
           if (event.target.checked && prefix) {
@@ -945,6 +980,7 @@
       renderTokenCheckboxes("fuelChecks", FUEL_OPTIONS, "tok-fuel");
       renderTokenCheckboxes("transmissionChecks", TRANSMISSION_OPTIONS, "tok-trans");
       renderTokenCheckboxes("bodyChecks", BODY_OPTIONS, "tok-body");
+      renderTokenCheckboxes("colorChecks", COLOR_OPTIONS, "tok-color");
       renderTokenCheckboxes("featureChecks", FEATURE_OPTIONS, "tok-feature");
       renderTokenCheckboxes("regCityChecks", REG_CITY_OPTIONS, "tok-reg");
       renderTokenCheckboxes("otherChecks", OTHER_OPTIONS, "tok-other");
