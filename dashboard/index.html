@@ -3,1125 +3,762 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>OLXify Karachi Control Panel</title>
+  <title>OLXify — Lahore</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..900&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg-0: #f4f7fd;
-      --bg-1: #eaf1ff;
-      --ink: #162039;
-      --ink-soft: #5a6888;
-      --line: rgba(29, 61, 120, 0.14);
-      --line-strong: rgba(25, 66, 136, 0.26);
-      --primary: #0d6efd;
-      --primary-strong: #0a4cb0;
-      --danger: #da3d52;
-      --ok: #1a9b5b;
-      --surface: rgba(255, 255, 255, 0.74);
-      --surface-solid: #ffffff;
-      --shadow-lg: 0 24px 50px rgba(13, 45, 106, 0.14);
-      --shadow-md: 0 12px 28px rgba(17, 49, 102, 0.12);
-      --radius-xl: 22px;
-      --radius-lg: 16px;
-      --radius-md: 11px;
+      --bg:       #0b0d14;
+      --bg2:      #10121c;
+      --surface:  #161a28;
+      --surface2: #1c2134;
+      --border:   rgba(255,255,255,0.07);
+      --border2:  rgba(255,255,255,0.13);
+      --text:     #dde3f5;
+      --muted:    #5e6a88;
+      --muted2:   #8494b8;
+      --accent:   #4f7fff;
+      --ok:       #34c98e;
+      --err:      #f05066;
+      --r:        12px;
+      --rs:       8px;
+      --rss:      6px;
     }
-
-    * {
-      box-sizing: border-box;
-    }
-
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      margin: 0;
-      font-family: "Manrope", sans-serif;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 6% 5%, rgba(81, 175, 255, 0.28), transparent 30%),
-        radial-gradient(circle at 96% 1%, rgba(142, 193, 255, 0.35), transparent 32%),
-        linear-gradient(165deg, var(--bg-0), var(--bg-1));
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      z-index: -2;
-      pointer-events: none;
-      background-image:
-        linear-gradient(rgba(18, 63, 132, 0.07) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(18, 63, 132, 0.07) 1px, transparent 1px);
-      background-size: 42px 42px;
-      mask-image: radial-gradient(circle at center, black 35%, transparent 88%);
-      opacity: 0.5;
-    }
-
-    .orb {
-      position: fixed;
-      width: 360px;
-      height: 360px;
-      border-radius: 999px;
-      filter: blur(42px);
-      opacity: 0.34;
-      z-index: -1;
-      pointer-events: none;
-      animation: float 16s ease-in-out infinite;
-    }
-
-    .orb.a {
-      background: #7fd2ff;
-      right: -120px;
-      top: -150px;
-    }
-
-    .orb.b {
-      background: #92efcc;
-      left: -140px;
-      bottom: -170px;
-      animation-delay: -5s;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-14px) scale(1.05); }
-    }
-
-    .wrap {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 24px 18px 34px;
-    }
-
-    .card {
-      background: var(--surface);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--line);
-      border-radius: var(--radius-xl);
-      padding: 18px;
-      margin-bottom: 14px;
-      box-shadow: var(--shadow-md);
-      animation: reveal 0.45s ease both;
-    }
-
-    @keyframes reveal {
-      from { opacity: 0; transform: translateY(7px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .hero {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 18px;
-    }
-
-    .eyebrow {
-      margin: 0;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #5374a6;
-      font-size: 0.72rem;
-      font-weight: 700;
-    }
-
-    h1 {
-      margin: 7px 0 8px;
-      font-family: "Outfit", sans-serif;
-      letter-spacing: -0.02em;
-      font-size: clamp(1.4rem, 2.5vw, 2.1rem);
-      line-height: 1.15;
-    }
-
-    h2 {
-      margin: 0 0 10px;
-      font-family: "Outfit", sans-serif;
-      letter-spacing: -0.01em;
-      font-size: 1.08rem;
-    }
-
-    h3 {
-      margin: 0 0 8px;
-      font-family: "Outfit", sans-serif;
-      color: #2f4f7f;
-      font-size: 0.95rem;
-      letter-spacing: 0.01em;
-    }
-
-    p {
-      color: var(--ink-soft);
-      margin-top: 0;
-    }
-
-    .sub {
-      margin: 0;
+      font-size: 14px;
       line-height: 1.5;
-      max-width: 760px;
-      font-size: 0.95rem;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .badge-row {
+    /* Nav */
+    .nav {
       display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: flex-end;
-      max-width: 440px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 52px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(11,13,20,0.92);
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 0;
+      z-index: 300;
     }
-
-    .badge {
-      padding: 7px 11px;
+    .nav-brand {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(79,127,255,0.5);
+    }
+    .nav-pill {
+      font-size: 11px; font-weight: 600;
+      color: var(--muted2);
+      background: var(--surface2);
+      border: 1px solid var(--border2);
       border-radius: 999px;
-      border: 1px solid rgba(31, 67, 126, 0.17);
-      font-size: 0.74rem;
-      font-weight: 700;
-      color: #355581;
-      background: rgba(255, 255, 255, 0.76);
+      padding: 3px 9px;
     }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
+    .nav-user  { font-size: 12px; color: var(--muted); font-weight: 500; }
 
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      border: 0; border-radius: var(--rs);
+      padding: 9px 15px;
+      font: inherit; font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      transition: all 0.14s ease;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #5e8fff; }
+    .btn-ghost {
+      background: transparent; color: var(--muted2);
+      border: 1px solid var(--border);
+      padding: 6px 11px; font-size: 12px;
+    }
+    .btn-ghost:hover:not(:disabled) { border-color: var(--border2); color: var(--text); }
+    .btn-danger {
+      background: transparent; color: var(--err);
+      border: 1px solid rgba(240,80,102,0.28);
+      padding: 6px 11px; font-size: 12px;
+    }
+    .btn-danger:hover:not(:disabled) { background: rgba(240,80,102,0.08); }
+    .btn-run {
+      width: 100%; padding: 13px;
+      font: inherit; font-size: 14px; font-weight: 700; letter-spacing: -0.01em;
+      background: linear-gradient(135deg, #4f7fff 0%, #7a6dff 100%);
+      color: #fff; border-radius: var(--r); border: 0; cursor: pointer;
+      transition: all 0.16s ease;
+      position: relative; overflow: hidden;
+    }
+    .btn-run::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg,rgba(255,255,255,0.12) 0%,transparent 60%);
+      pointer-events: none;
+    }
+    .btn-run:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(79,127,255,0.38); }
+    .btn-run:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* Auth */
+    .auth-screen {
+      min-height: calc(100vh - 52px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px 16px;
+    }
+    .auth-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 36px 32px;
+      width: 100%; max-width: 360px;
+      animation: fadeUp 0.3s ease both;
+    }
+    .auth-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+    .auth-logo-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg,#4f7fff,#7a6dff);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 900; color: #fff;
+    }
+    .auth-logo-name { font-size: 17px; font-weight: 800; letter-spacing: -0.03em; }
+    .auth-title { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+    .auth-sub   { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+
+    /* Form */
+    .field { margin-bottom: 14px; }
+    .field-label {
+      display: block;
+      font-size: 11px; font-weight: 700; color: var(--muted2);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+    input[type="text"], input[type="password"], input[type="number"] {
+      width: 100%;
+      background: var(--bg2); border: 1px solid var(--border2);
+      color: var(--text); border-radius: var(--rs);
+      padding: 10px 12px; font: inherit; font-size: 14px;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    input::placeholder { color: var(--muted); }
+    input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,127,255,0.18); }
+
+    /* Layout */
+    .page { max-width: 1360px; margin: 0 auto; padding: 20px 16px 32px; }
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
+      grid-template-columns: 1fr 420px;
       gap: 14px;
       align-items: start;
     }
 
-    .meta {
-      margin: 0 0 10px;
-      font-size: 0.9rem;
-      line-height: 1.45;
+    /* Panel */
+    .panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); overflow: hidden;
+      animation: fadeUp 0.3s ease both;
+    }
+    .panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-title { font-size: 13px; font-weight: 700; letter-spacing: -0.01em; }
+    .panel-body  { padding: 16px; }
+
+    /* Section label */
+    .sec-label {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--muted); margin-bottom: 10px;
     }
 
-    .panel-note {
-      border: 1px solid rgba(12, 79, 170, 0.2);
-      background: linear-gradient(120deg, rgba(238, 246, 255, 0.92), rgba(234, 245, 255, 0.72));
-      border-radius: var(--radius-md);
-      color: #376091;
-      padding: 10px 11px;
-      font-size: 0.84rem;
-      line-height: 1.45;
-      margin-bottom: 11px;
+    /* Area grid */
+    .area-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
     }
-
-    .group {
-      border: 1px solid var(--line);
-      border-radius: var(--radius-lg);
-      padding: 13px;
-      margin-top: 10px;
-      background: rgba(255, 255, 255, 0.56);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 0.84rem;
-      font-weight: 700;
-      color: #2d4f7f;
-    }
-
-    .small {
-      font-size: 0.78rem;
-      color: var(--ink-soft);
-      line-height: 1.45;
-      margin-top: 2px;
-    }
-
-    input[type="text"],
-    input[type="password"],
-    input[type="number"],
-    textarea {
-      width: 100%;
-      background: #ffffff;
-      border: 1px solid rgba(18, 59, 117, 0.23);
-      color: var(--ink);
-      border-radius: var(--radius-md);
-      padding: 10px 11px;
-      margin-top: 6px;
-      font: inherit;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    input:focus,
-    textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.14);
-    }
-
-    textarea {
-      min-height: 82px;
-      resize: vertical;
-      line-height: 1.45;
-    }
-
-    .grid {
+    .area-controls { display: flex; gap: 6px; }
+    .areas-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+    }
+    .area-chip {
+      display: flex; align-items: center; gap: 7px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--rss);
+      padding: 7px 9px; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
+    }
+    .area-chip:hover { border-color: var(--border2); }
+    .area-chip input[type="checkbox"] {
+      width: 13px; height: 13px;
+      accent-color: var(--accent);
+      cursor: pointer; margin: 0; flex-shrink: 0;
+    }
+    .area-chip span { font-size: 11.5px; font-weight: 500; line-height: 1.3; }
+    .area-chip:has(input:checked) {
+      border-color: rgba(79,127,255,0.4);
+      background: rgba(79,127,255,0.07);
     }
 
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
+    .hr { height: 1px; background: var(--border); margin: 18px 0; }
+
+    /* Price row */
+    .price-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .price-row .field { margin: 0; }
+
+    /* 2-col */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* Custom dropdown */
+    .dd-wrap { position: relative; }
+    .dd-trigger {
+      width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      background: var(--bg2); border: 1px solid var(--border2);
+      color: var(--text); border-radius: var(--rs);
+      padding: 10px 12px; cursor: pointer;
+      font: inherit; font-size: 13px; font-weight: 500; text-align: left;
+      transition: border-color 0.16s;
     }
-
-    .chip-box {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid rgba(26, 63, 120, 0.17);
-      padding: 8px 10px;
-      border-radius: 11px;
-      background: #ffffff;
-      transition: border-color 0.2s, transform 0.16s ease, box-shadow 0.2s;
+    .dd-trigger:hover { border-color: rgba(255,255,255,0.2); }
+    .dd-trigger.open { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,127,255,0.15); }
+    .dd-inner { display: flex; align-items: center; gap: 7px; min-width: 0; overflow: hidden; }
+    .dd-inner > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dd-arrow { font-size: 9px; color: var(--muted); transition: transform 0.18s; flex-shrink: 0; }
+    .dd-trigger.open .dd-arrow { transform: rotate(180deg); }
+    .dd-badge {
+      background: var(--accent); color: #fff;
+      font-size: 10px; font-weight: 800;
+      padding: 2px 6px; border-radius: 999px; flex-shrink: 0;
     }
-
-    .chip-box:hover {
-      border-color: rgba(13, 110, 253, 0.38);
-      transform: translateY(-1px);
-      box-shadow: 0 8px 14px rgba(20, 71, 139, 0.12);
+    .dd-menu {
+      position: absolute; top: calc(100% + 5px); left: 0; right: 0;
+      background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: var(--rs); z-index: 500;
+      max-height: 300px; display: flex; flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+      animation: ddIn 0.13s ease;
     }
-
-    .chip-box input {
-      margin: 0;
-    }
-
-    .row {
-      display: flex;
-      gap: 9px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    button {
-      border: 0;
-      border-radius: 11px;
-      background: linear-gradient(135deg, var(--primary), #2b8afc);
-      color: #fff;
-      padding: 10px 14px;
-      cursor: pointer;
-      font-size: 0.84rem;
-      font-weight: 800;
-      letter-spacing: 0.01em;
-      box-shadow: 0 10px 18px rgba(16, 82, 170, 0.2);
-      transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 13px 22px rgba(16, 82, 170, 0.24);
-    }
-
-    button:disabled {
-      opacity: 0.58;
-      cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-
-    button.secondary {
-      background: linear-gradient(135deg, #5b759d, #6f8bb2);
-      box-shadow: 0 8px 16px rgba(50, 74, 108, 0.2);
-    }
-
-    button.danger {
-      background: linear-gradient(135deg, #cc344d, var(--danger));
-      box-shadow: 0 8px 16px rgba(171, 44, 71, 0.23);
-    }
-
-    .msg {
-      margin-top: 10px;
-      font-size: 0.86rem;
-      font-weight: 700;
-    }
-
-    .msg.ok { color: var(--ok); }
-    .msg.err { color: var(--danger); }
-
-    .pill {
-      display: inline-block;
-      padding: 2px 7px;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      background: #eaf2ff;
-      color: #44679b;
-      border: 1px solid rgba(26, 61, 115, 0.14);
-      vertical-align: middle;
-    }
-
-    .token-preview {
-      font-family: "SFMono-Regular", Consolas, monospace;
-      font-size: 0.79rem;
-      color: #1f5940;
-      background: #effbf5;
-      border: 1px solid rgba(29, 114, 79, 0.25);
-      border-radius: 11px;
-      padding: 10px;
-      word-break: break-all;
-      min-height: 42px;
-    }
-
-    .action-links {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 4px;
-    }
-
-    .action-links .muted {
-      color: var(--ink-soft);
-      font-size: 0.77rem;
-      font-weight: 700;
-    }
-
-    .runs-card {
-      position: sticky;
-      top: 16px;
-      max-height: calc(100vh - 36px);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .table-wrap {
-      overflow: auto;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: var(--surface-solid);
-      max-height: min(60vh, 520px);
-    }
-
-    table {
+    @keyframes ddIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
+    .dd-search-wrap { padding: 8px; border-bottom: 1px solid var(--border); }
+    .dd-search {
       width: 100%;
-      border-collapse: collapse;
-      font-size: 0.84rem;
-      min-width: 640px;
+      background: var(--bg); border: 1px solid var(--border2);
+      color: var(--text); border-radius: var(--rss);
+      padding: 7px 10px; font: inherit; font-size: 12px;
     }
+    .dd-search:focus { outline: none; border-color: var(--accent); }
+    .dd-list { overflow-y: auto; flex: 1; padding: 4px; }
+    .dd-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 8px 10px; border-radius: var(--rss);
+      cursor: pointer; font-size: 13px;
+      transition: background 0.1s; user-select: none;
+    }
+    .dd-item:hover { background: rgba(255,255,255,0.05); }
+    .dd-item.active { background: rgba(79,127,255,0.12); }
+    .dd-item input { width: 13px; height: 13px; accent-color: var(--accent); cursor: pointer; margin: 0; flex-shrink: 0; pointer-events: none; }
+    .color-dot { width: 13px; height: 13px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.18); flex-shrink: 0; }
+    .dd-empty { padding: 16px 10px; font-size: 12px; color: var(--muted); text-align: center; }
 
+    /* Msg */
+    .msg { font-size: 12px; font-weight: 600; margin-top: 10px; min-height: 18px; line-height: 1.4; }
+    .msg.ok  { color: var(--ok); }
+    .msg.err { color: var(--err); }
+
+    /* Runs */
+    .runs-panel { position: sticky; top: 68px; max-height: calc(100vh - 84px); display: flex; flex-direction: column; }
+    .runs-panel .panel { display: flex; flex-direction: column; max-height: calc(100vh - 84px); }
+    .runs-body { overflow: auto; flex: 1; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
     thead th {
-      position: sticky;
-      top: 0;
-      z-index: 1;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      font-size: 0.7rem;
-      color: #43608b;
-      background: #f2f6ff;
+      position: sticky; top: 0; z-index: 2;
+      background: var(--surface);
+      text-align: left; padding: 10px 12px;
+      font-size: 10.5px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--muted); border-bottom: 1px solid var(--border);
     }
+    td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    a:hover { text-decoration: underline; }
 
-    th, td {
-      border-bottom: 1px solid rgba(22, 63, 126, 0.1);
-      text-align: left;
-      padding: 8px 9px;
-      vertical-align: top;
+    .status-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .dot-ok      { background: var(--ok); }
+    .dot-err     { background: var(--err); }
+    .dot-running { background: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
+    .dot-idle    { background: var(--muted); }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
+    .td-links { display: flex; flex-direction: column; gap: 3px; }
+
+    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+      .runs-panel { position: static; max-height: none; }
+      .runs-panel .panel { max-height: 420px; }
     }
-
-    tr:hover td {
-      background: #f8fbff;
+    @media (max-width: 720px) {
+      .areas-grid { grid-template-columns: repeat(3, 1fr); }
+      .two-col    { grid-template-columns: 1fr; }
+      .price-row  { grid-template-columns: 1fr; }
     }
-
-    a {
-      color: var(--primary-strong);
-      text-decoration: none;
-      font-weight: 700;
+    @media (max-width: 480px) {
+      .areas-grid { grid-template-columns: repeat(2, 1fr); }
+      .auth-card  { padding: 28px 20px; }
+      .page       { padding: 14px 12px 28px; }
     }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    .auth-card {
-      max-width: 540px;
-    }
-
-    @media (max-width: 1060px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-
-      .runs-card {
-        position: static;
-        max-height: none;
-      }
-    }
-
-    @media (max-width: 760px) {
-      .hero {
-        flex-direction: column;
-      }
-
-      .badge-row {
-        justify-content: flex-start;
-      }
-
-      .grid,
-      .grid-3 {
-        grid-template-columns: 1fr;
-      }
-
-      .table-wrap {
-        max-height: 380px;
-      }
-    }
+    @media (max-width: 320px) { .areas-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-  <div class="orb a"></div>
-  <div class="orb b"></div>
-  <div class="wrap">
-    <header class="card hero">
-      <div>
-        <p class="eyebrow">OLXify Ops Console</p>
-        <h1>Karachi Workflow Control Panel</h1>
-        <p class="sub">Manual dispatch only for Karachi. Lahore automation remains isolated, untouched, and scheduled exactly as before.</p>
-      </div>
-      <div class="badge-row">
-        <span class="badge">Karachi Manual Dispatch</span>
-        <span class="badge">Lahore Unchanged</span>
-        <span class="badge">Single-Admin Session Auth</span>
-        <span class="badge">OLX Filter Tokens</span>
-      </div>
-    </header>
 
-    <section id="loginCard" class="card auth-card">
-      <h2>Admin Login</h2>
-      <label>Username
-        <input id="username" type="text" autocomplete="username" />
-      </label>
-      <label>Password
-        <input id="password" type="password" autocomplete="current-password" />
-      </label>
-      <div class="row">
-        <button id="loginBtn" onclick="login()">Login</button>
-      </div>
-      <div id="loginMsg" class="msg"></div>
-    </section>
-
-    <section id="panel" style="display:none;">
-      <div class="layout">
-        <div class="card">
-          <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <h2 style="margin:0;">Karachi Manual Run</h2>
-            <button class="danger" onclick="logout()">Logout</button>
-          </div>
-          <p id="authMeta" class="meta"></p>
-          <div class="panel-note">Use this panel only for Karachi manual execution and Karachi-specific filter controls. Lahore workflow remains outside this dashboard and is not modified here.</div>
-
-          <div class="group">
-            <h3>GitHub Access Token</h3>
-            <label>GitHub PAT (optional if not set in Vercel env)
-              <input id="githubPat" type="password" placeholder="ghp_... (used only for API calls, not stored server-side)" />
-            </label>
-            <div class="small">If blank, backend uses `GITHUB_PAT` from Vercel environment.</div>
-          </div>
-
-          <div class="group">
-            <h3>Area Selection (Karachi)</h3>
-            <div class="row" style="margin-bottom:8px;">
-              <button class="secondary" onclick="selectAllAreas(true)">Select All Areas</button>
-              <button class="secondary" onclick="selectAllAreas(false)">Clear All</button>
-            </div>
-            <div id="areas" class="grid"></div>
-          </div>
-
-          <div class="group">
-            <h3>Execution Settings</h3>
-            <div class="grid">
-              <label>Max Pages
-                <input id="maxPages" type="number" min="1" max="10" value="2" />
-              </label>
-              <label>Max Listings
-                <input id="maxListings" type="number" min="1" max="50" value="15" />
-              </label>
-            </div>
-            <label>Custom OLX Search URL (optional, overrides area selection)
-              <input id="customSearchUrl" type="text" placeholder="https://www.olx.com.pk/.../cars_c84?filter=price_min_1000000" />
-            </label>
-            <div class="small">Example: `https://www.olx.com.pk/johar-town_g5000042/cars_c84?filter=price_min_1000000`</div>
-          </div>
-
-          <div class="group">
-            <h3>OLX Filters (default off)</h3>
-            <div class="grid">
-              <label>Price Min (Rs)
-                <input id="priceMin" type="number" min="0" placeholder="1000000" />
-              </label>
-              <label>Price Max (Rs)
-                <input id="priceMax" type="number" min="0" placeholder="3000000" />
-              </label>
-            </div>
-
-            <div class="grid-3">
-              <label>KM Min (token helper)
-                <input id="kmMin" type="number" min="0" placeholder="50000" />
-              </label>
-              <label>KM Max (token helper)
-                <input id="kmMax" type="number" min="0" placeholder="100000" />
-              </label>
-              <label>Year Min/Max (token helper format)
-                <input id="yearRange" type="text" placeholder="2018-2024" />
-              </label>
-            </div>
-
-            <div class="group">
-              <h3>Brand</h3>
-              <div id="brandChecks" class="grid"></div>
-            </div>
-
-            <div class="group">
-              <h3>Condition</h3>
-              <div id="conditionChecks" class="grid"></div>
-            </div>
-
-            <div class="group">
-              <h3>Fuel</h3>
-              <div id="fuelChecks" class="grid"></div>
-            </div>
-
-            <div class="group">
-              <h3>Transmission</h3>
-              <div id="transmissionChecks" class="grid"></div>
-            </div>
-
-            <div class="group">
-              <h3>Body Type</h3>
-              <div id="bodyChecks" class="grid"></div>
-            </div>
-
-            <div class="group">
-              <h3>Features</h3>
-              <div id="featureChecks" class="grid"></div>
-            </div>
-
-            <div class="group">
-              <h3>Registration City</h3>
-              <div id="regCityChecks" class="grid"></div>
-            </div>
-
-            <div class="group">
-              <h3>Car Documents / Assembly / Price Type</h3>
-              <div id="otherChecks" class="grid"></div>
-            </div>
-
-            <label>Import Filters from Existing OLX URL (optional)
-              <input id="importUrl" type="text" placeholder="Paste OLX filtered URL to import its filter tokens" />
-            </label>
-            <div class="row">
-              <button class="secondary" onclick="importFiltersFromUrl()">Import URL Filters</button>
-              <button class="secondary" onclick="clearAllFilters()">Clear All Filters</button>
-            </div>
-
-            <label>Additional Filter Tokens (comma-separated, exact OLX tokens)
-              <textarea id="extraTokens" placeholder="transmission_eq_automatic,registration_city_eq_lahore"></textarea>
-            </label>
-            <div class="small">Use this for advanced filters to keep OLX query behavior fully intact.</div>
-
-            <div style="margin-top:10px;">
-              <div class="small">Effective `filter=` value sent to workflow:</div>
-              <div id="tokenPreview" class="token-preview"></div>
-            </div>
-          </div>
-
-          <div class="row" style="margin-top:10px;">
-            <button id="runBtn" onclick="runKarachi()">Run Karachi Workflow</button>
-          </div>
-          <div id="runMsg" class="msg"></div>
-        </div>
-
-        <aside class="card runs-card">
-          <div class="row" style="justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <h2 style="margin:0;">Recent Karachi Workflow Runs</h2>
-            <button class="secondary" onclick="loadRuns()">Refresh</button>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Created</th>
-                  <th>Status</th>
-                  <th>Conclusion</th>
-                  <th>Title</th>
-                  <th>Actor</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="runsTable"></tbody>
-            </table>
-          </div>
-        </aside>
-      </div>
-    </section>
+<!-- Nav -->
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-dot"></div>
+    OLXify
+    <span class="nav-pill">Lahore</span>
   </div>
+  <div class="nav-right" id="navRight" style="display:none">
+    <span class="nav-user" id="navUser"></span>
+    <button class="btn btn-danger" onclick="logout()">Sign out</button>
+  </div>
+</nav>
 
-  <script>
-    let areaData = [];
+<!-- Auth screen -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">O</div>
+      <div class="auth-logo-name">OLXify</div>
+    </div>
+    <div class="auth-title">Sign in</div>
+    <div class="auth-sub">Lahore Scraper Control Panel</div>
+    <div class="field">
+      <label class="field-label" for="username">Username</label>
+      <input id="username" type="text" autocomplete="username" placeholder="admin" />
+    </div>
+    <div class="field">
+      <label class="field-label" for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" placeholder="••••••••"
+             onkeydown="if(event.key==='Enter') login()" />
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:4px;" id="loginBtn" onclick="login()">Continue</button>
+    <div id="loginMsg" class="msg"></div>
+  </div>
+</div>
 
-    const BRAND_OPTIONS = [
-      ["Toyota", "make_eq_toyota"], ["Honda", "make_eq_cars-honda"], ["Suzuki", "make_eq_cars-suzuki"],
-      ["Nissan", "make_eq_nissan"], ["Daihatsu", "make_eq_daihatsu"], ["Hyundai", "make_eq_hyundai"],
-      ["Changan", "make_eq_changan"], ["KIA", "make_eq_kia"], ["MG", "make_eq_mg"],
-      ["Haval", "make_eq_haval"], ["Mercedes", "make_eq_mercedes"], ["Mitsubishi", "make_eq_mitsubishi"],
-      ["Proton", "make_eq_proton"], ["Prince", "make_eq_prince"], ["Subaru", "make_eq_subaru"],
-      ["Volkswagen", "make_eq_volkswagen"], ["DFSK", "make_eq_dfsk"], ["Audi", "make_eq_audi"],
-      ["Tesla", "make_eq_tesla"], ["FAW", "make_eq_faw"], ["Chevrolet", "make_eq_chevrolet"],
-      ["Isuzu", "make_eq_cars-isuzu"], ["Other Brands", "make_eq_cars-other"], ["BMW", "make_eq_bmw"],
-      ["Chery", "make_eq_chery"], ["Peugeot", "make_eq_peugeot"], ["JAC", "make_eq_jac"],
-      ["Ford", "make_eq_ford"], ["Range Rover", "make_eq_range-rover"], ["JW Forland", "make_eq_jw-fortland"]
-    ];
-    const CONDITION_OPTIONS = [["Used", "new_used_eq_used"], ["New", "new_used_eq_new"]];
-    const FUEL_OPTIONS = [["Petrol", "petrol_eq_petrol"], ["Hybrid", "petrol_eq_hybrid"], ["Diesel", "petrol_eq_diesel"], ["Electric", "petrol_eq_electric"], ["LPG", "petrol_eq_lpg"]];
-    const TRANSMISSION_OPTIONS = [["Automatic", "transmission_eq_automatic"], ["Manual", "transmission_eq_manual"]];
-    const BODY_OPTIONS = [
-      ["Sedan", "body_type_eq_3"], ["Hatchback", "body_type_eq_4"], ["SUV", "body_type_eq_5"], ["Other", "body_type_eq_6"],
-      ["Small city car", "body_type_eq_11"], ["Pickup", "body_type_eq_10"], ["Convertible", "body_type_eq_2"],
-      ["Van / Bus", "body_type_eq_7"], ["MPV", "body_type_eq_9"], ["Sports / Coupe", "body_type_eq_1"]
-    ];
-    const FEATURE_OPTIONS = [
-      ["Power Steering", "features_eq_20"], ["Power Windows", "features_eq_21"], ["Power Mirrors", "features_eq_19"],
-      ["ABS", "features_eq_1"], ["Airbags", "features_eq_2"], ["AM/FM Radio", "features_eq_5"],
-      ["Bluetooth System", "features_eq_31"], ["Touch Screen", "features_eq_39"]
-    ];
-    const REG_CITY_OPTIONS = [
-      ["Lahore", "registration_city_eq_lahore"], ["Punjab", "registration_city_eq_punjab"], ["Unregistered", "registration_city_eq_unregistered"],
-      ["Islamabad", "registration_city_eq_islamabad"], ["Sindh", "registration_city_eq_sindh"], ["Karachi", "registration_city_eq_karachi"],
-      ["Multan", "registration_city_eq_multan"], ["Rawalpindi", "registration_city_eq_rawalpindi"], ["Ali Masjid", "registration_city_eq_alimasjid"],
-      ["Faisalabad", "registration_city_eq_faisalabad"], ["Gujranwala", "registration_city_eq_gujranwala"],
-      ["Okara", "registration_city_eq_okara"], ["Sahiwal", "registration_city_eq_sahiwal"]
-    ];
-    const OTHER_OPTIONS = [
-      ["Documents: Original", "documents_eq_original"], ["Documents: Duplicate", "documents_eq_duplicate"],
-      ["Assembly: Local", "assembly_eq_local"], ["Assembly: Imported", "assembly_eq_imported"],
-      ["Price Type: Call for price", "price_type_eq_requestable"]
-    ];
-    const AND_JOIN_PREFIXES = new Set([
-      "body_type_eq_",
-      "features_eq_",
-      "new_used_eq_",
-      "petrol_eq_",
-      "registration_city_eq_"
-    ]);
-    const SINGLE_VALUE_PREFIXES = new Set([
-      "assembly_eq_",
-      "documents_eq_",
-      "make_eq_",
-      "price_type_eq_",
-      "transmission_eq_"
-    ]);
+<!-- Main page -->
+<div class="page" id="mainPage" style="display:none">
+  <div class="layout">
 
-    function setMsg(id, text, ok) {
-      const el = document.getElementById(id);
-      el.textContent = text || "";
-      el.className = "msg " + (text ? (ok ? "ok" : "err") : "");
+    <!-- Left: Config -->
+    <div>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Scrape Configuration</div>
+        </div>
+        <div class="panel-body">
+
+          <!-- Locations -->
+          <div class="area-head">
+            <div class="sec-label" style="margin:0">Locations</div>
+            <div class="area-controls">
+              <button class="btn btn-ghost" onclick="selectAllAreas(true)">All</button>
+              <button class="btn btn-ghost" onclick="selectAllAreas(false)">None</button>
+            </div>
+          </div>
+          <div id="areasGrid" class="areas-grid"></div>
+
+          <div class="hr"></div>
+
+          <!-- Price -->
+          <div class="sec-label">Price Range (PKR)</div>
+          <div class="price-row">
+            <div class="field">
+              <label class="field-label" for="priceMin">Min</label>
+              <input id="priceMin" type="number" min="0" placeholder="e.g. 1,000,000" />
+            </div>
+            <div class="field">
+              <label class="field-label" for="priceMax">Max</label>
+              <input id="priceMax" type="number" min="0" placeholder="e.g. 5,000,000" />
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <!-- Brand + Colour -->
+          <div class="two-col">
+            <div>
+              <div class="sec-label">Brand</div>
+              <div class="dd-wrap" id="brandWrap">
+                <button class="dd-trigger" id="brandTrigger" onclick="toggleDd('brand')">
+                  <div class="dd-inner"><span id="brandLabel">Any Brand</span></div>
+                  <span class="dd-arrow">&#9660;</span>
+                </button>
+                <div class="dd-menu" id="brandMenu" style="display:none">
+                  <div class="dd-search-wrap">
+                    <input class="dd-search" type="text" placeholder="Search brands…"
+                           id="brandSearch" oninput="filterDd('brand')" />
+                  </div>
+                  <div class="dd-list" id="brandList"></div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="sec-label">Exterior Colour</div>
+              <div class="dd-wrap" id="colorWrap">
+                <button class="dd-trigger" id="colorTrigger" onclick="toggleDd('color')">
+                  <div class="dd-inner"><span id="colorLabel">Any Colour</span></div>
+                  <span class="dd-arrow">&#9660;</span>
+                </button>
+                <div class="dd-menu" id="colorMenu" style="display:none">
+                  <div class="dd-search-wrap">
+                    <input class="dd-search" type="text" placeholder="Search colours…"
+                           id="colorSearch" oninput="filterDd('color')" />
+                  </div>
+                  <div class="dd-list" id="colorList"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hr"></div>
+
+          <button class="btn-run" id="runBtn" onclick="runLahore()">Run Lahore Scrape</button>
+          <div id="runMsg" class="msg"></div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Runs -->
+    <div class="runs-panel">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Recent Runs</div>
+          <button class="btn btn-ghost" onclick="loadRuns()">Refresh</button>
+        </div>
+        <div class="runs-body">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Links</th>
+              </tr>
+            </thead>
+            <tbody id="runsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const BRAND_OPTIONS = [
+  ["Toyota","make_eq_toyota"],["Honda","make_eq_cars-honda"],["Suzuki","make_eq_cars-suzuki"],
+  ["Nissan","make_eq_nissan"],["Daihatsu","make_eq_daihatsu"],["Hyundai","make_eq_hyundai"],
+  ["Changan","make_eq_changan"],["KIA","make_eq_kia"],["MG","make_eq_mg"],
+  ["Haval","make_eq_haval"],["Mercedes","make_eq_mercedes"],["Mitsubishi","make_eq_mitsubishi"],
+  ["Proton","make_eq_proton"],["Prince","make_eq_prince"],["Subaru","make_eq_subaru"],
+  ["Volkswagen","make_eq_volkswagen"],["DFSK","make_eq_dfsk"],["Audi","make_eq_audi"],
+  ["Tesla","make_eq_tesla"],["FAW","make_eq_faw"],["Chevrolet","make_eq_chevrolet"],
+  ["Isuzu","make_eq_cars-isuzu"],["BMW","make_eq_bmw"],["Chery","make_eq_chery"],
+  ["Peugeot","make_eq_peugeot"],["JAC","make_eq_jac"],["Ford","make_eq_ford"],
+  ["Range Rover","make_eq_range-rover"],["JW Forland","make_eq_jw-fortland"],
+  ["Jaecoo","make_eq_jaecoo"],["Mazda","make_eq_mazda"],["United","make_eq_united"],
+  ["BYD","make_eq_byd"],["Lexus","make_eq_lexus"],["Datsun","make_eq_datsun"],
+  ["BAIC","make_eq_baic"],["Daewoo","make_eq_daewoo"],["Land Rover","make_eq_land-rover"],
+  ["Deepal","make_eq_deepal"],["Jeep","make_eq_jeep"],["Fiat","make_eq_fiat"],
+  ["Ssangyong","make_eq_ssangyong"],["Jetour","make_eq_jetour"],["Porsche","make_eq_porsche"],
+  ["Cadillac","make_eq_cadillac"],["Seres","make_eq_seres"],["Dongfeng","make_eq_dongfeng"],
+  ["Other Brands","make_eq_cars-other"],
+];
+
+const COLOR_OPTIONS = [
+  ["White","color_eq_white","#f0f0f0"],["Silver","color_eq_silver","#b0b4bc"],
+  ["Black","color_eq_black","#202020"],["Grey","color_eq_grey","#7a7e88"],
+  ["Blue","color_eq_blue","#2c6ec8"],["Red","color_eq_red","#d93040"],
+  ["Maroon","color_eq_maroon","#7a1020"],["Beige","color_eq_beige","#c8b490"],
+  ["Green","color_eq_green","#2a8830"],["Brown","color_eq_brown","#7a3e18"],
+  ["Gold","color_eq_gold","#c8a028"],["Indigo","color_eq_indigo","#3c1880"],
+  ["Purple","color_eq_purple","#7c28cc"],["Yellow","color_eq_yellow","#e8bc30"],
+  ["Turquoise","color_eq_turquoise","#38c0c0"],["Bronze","color_eq_bronze","#9c5c28"],
+  ["Burgundy","color_eq_burgundy","#6c1830"],["Magenta","color_eq_magenta","#c02880"],
+  ["Navy","color_eq_navy","#0c1e58"],["Orange","color_eq_orange","#dc5800"],
+  ["Pink","color_eq_pink","#e078a8"],["Unlisted","color_eq_unlisted","#3a3e48"],
+];
+
+let areaData = [];
+let selectedBrand = null;
+let selectedColors = new Set();
+
+/* Areas */
+function renderAreas() {
+  document.getElementById("areasGrid").innerHTML = areaData.map(a =>
+    '<label class="area-chip">'
+    + '<input class="area-check" type="checkbox" value="' + a.key + '" checked />'
+    + '<span>' + a.name + '</span>'
+    + '</label>'
+  ).join("");
+}
+function selectAllAreas(on) {
+  document.querySelectorAll(".area-check").forEach(x => { x.checked = on; });
+}
+function areaSelection() {
+  return Array.from(document.querySelectorAll(".area-check:checked")).map(x => x.value);
+}
+
+/* Dropdowns */
+function renderBrandList(q) {
+  q = (q || "").toLowerCase();
+  var items = BRAND_OPTIONS.filter(function(x){ return !q || x[0].toLowerCase().includes(q); });
+  var list = document.getElementById("brandList");
+  if (!items.length) { list.innerHTML = '<div class="dd-empty">No brands match</div>'; return; }
+  list.innerHTML = items.map(function(x){
+    var active = selectedBrand === x[1];
+    return '<div class="dd-item' + (active?" active":"") + '" onclick="pickBrand(\'' + x[1] + '\',\'' + x[0].replace(/'/g,"\\'") + '\')">'
+      + '<input type="radio" name="brand_r"' + (active?" checked":"") + ' tabindex="-1" />'
+      + '<span>' + x[0] + '</span>'
+      + '</div>';
+  }).join("");
+}
+function pickBrand(token, name) {
+  selectedBrand = (selectedBrand === token) ? null : token;
+  document.getElementById("brandLabel").textContent = selectedBrand ? name : "Any Brand";
+  closeDd("brand");
+}
+
+function renderColorList(q) {
+  q = (q || "").toLowerCase();
+  var items = COLOR_OPTIONS.filter(function(x){ return !q || x[0].toLowerCase().includes(q); });
+  var list = document.getElementById("colorList");
+  if (!items.length) { list.innerHTML = '<div class="dd-empty">No colours match</div>'; return; }
+  list.innerHTML = items.map(function(x){
+    var active = selectedColors.has(x[1]);
+    return '<div class="dd-item' + (active?" active":"") + '" onclick="toggleColor(\'' + x[1] + '\')">'
+      + '<input type="checkbox"' + (active?" checked":"") + ' tabindex="-1" />'
+      + '<span class="color-dot" style="background:' + x[2] + '"></span>'
+      + '<span>' + x[0] + '</span>'
+      + '</div>';
+  }).join("");
+  updateColorLabel();
+}
+function toggleColor(token) {
+  selectedColors.has(token) ? selectedColors.delete(token) : selectedColors.add(token);
+  renderColorList(document.getElementById("colorSearch").value);
+}
+function updateColorLabel() {
+  var n = selectedColors.size;
+  var lbl = n === 0 ? "Any Colour"
+    : n === 1 ? (COLOR_OPTIONS.find(function(c){ return selectedColors.has(c[1]); }) || ["1 Colour"])[0]
+    : n + " Colours";
+  document.getElementById("colorLabel").textContent = lbl;
+  var trigger = document.getElementById("colorTrigger");
+  var old = trigger.querySelector(".dd-badge");
+  if (old) old.remove();
+  if (n > 1) {
+    var b = document.createElement("span");
+    b.className = "dd-badge"; b.textContent = n;
+    trigger.querySelector(".dd-inner").appendChild(b);
+  }
+}
+
+function toggleDd(which) {
+  var menuId   = which === "brand" ? "brandMenu"   : "colorMenu";
+  var trigId   = which === "brand" ? "brandTrigger": "colorTrigger";
+  var menu     = document.getElementById(menuId);
+  var isOpen   = menu.style.display !== "none";
+  closeDd("brand"); closeDd("color");
+  if (!isOpen) {
+    menu.style.display = "flex";
+    document.getElementById(trigId).classList.add("open");
+    if (which === "brand") { renderBrandList(); setTimeout(function(){ document.getElementById("brandSearch").focus(); }, 40); }
+    else                   { renderColorList(); setTimeout(function(){ document.getElementById("colorSearch").focus(); }, 40); }
+  }
+}
+function closeDd(which) {
+  document.getElementById(which === "brand" ? "brandMenu"   : "colorMenu").style.display = "none";
+  document.getElementById(which === "brand" ? "brandTrigger": "colorTrigger").classList.remove("open");
+}
+function filterDd(which) {
+  var q = document.getElementById(which === "brand" ? "brandSearch" : "colorSearch").value;
+  which === "brand" ? renderBrandList(q) : renderColorList(q);
+}
+document.addEventListener("click", function(e) {
+  if (!e.target.closest("#brandWrap")) closeDd("brand");
+  if (!e.target.closest("#colorWrap")) closeDd("color");
+});
+
+/* Filter tokens */
+function buildFilterTokens() {
+  var tokens = [];
+  var pMin = document.getElementById("priceMin").value.trim();
+  var pMax = document.getElementById("priceMax").value.trim();
+  if (pMin) tokens.push("price_min_" + pMin);
+  if (pMax) tokens.push("price_max_" + pMax);
+  if (selectedBrand) tokens.push(selectedBrand);
+  if (selectedColors.size) {
+    var vals = Array.from(selectedColors).map(function(t){ return t.replace("color_eq_",""); });
+    tokens.push("color_eq_" + vals.join("_and_"));
+  }
+  return tokens.join(",");
+}
+
+/* Auth / API */
+function setMsg(id, text, ok) {
+  var el = document.getElementById(id);
+  el.textContent = text || "";
+  el.className = "msg" + (text ? (ok ? " ok" : " err") : "");
+}
+
+async function login() {
+  setMsg("loginMsg","",false);
+  var btn = document.getElementById("loginBtn");
+  btn.disabled = true; btn.textContent = "Signing in…";
+  try {
+    var r = await fetch("/api/login", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        username: document.getElementById("username").value,
+        password: document.getElementById("password").value,
+      }),
+    });
+    var d = await r.json();
+    if (!r.ok) { setMsg("loginMsg", d.error || "Login failed", false); return; }
+    await initSession();
+  } catch(err) { setMsg("loginMsg", String(err), false); }
+  finally { btn.disabled = false; btn.textContent = "Continue"; }
+}
+
+async function logout() {
+  await fetch("/api/logout", {method:"POST"});
+  document.getElementById("mainPage").style.display   = "none";
+  document.getElementById("authScreen").style.display = "flex";
+  document.getElementById("navRight").style.display   = "none";
+}
+
+async function initSession() {
+  var r = await fetch("/api/me");
+  if (!r.ok) {
+    document.getElementById("authScreen").style.display = "flex";
+    document.getElementById("mainPage").style.display   = "none";
+    return;
+  }
+  var d = await r.json();
+  areaData = d.lahoreAreas || [];
+  renderAreas();
+  document.getElementById("navUser").textContent      = d.username;
+  document.getElementById("navRight").style.display   = "flex";
+  document.getElementById("authScreen").style.display = "none";
+  document.getElementById("mainPage").style.display   = "block";
+  await loadRuns();
+}
+
+async function runLahore() {
+  setMsg("runMsg","",false);
+  var areas = areaSelection();
+  if (!areas.length) { setMsg("runMsg","Select at least one location.",false); return; }
+  var btn = document.getElementById("runBtn");
+  btn.disabled = true; btn.textContent = "Dispatching…";
+  try {
+    var r = await fetch("/api/run-lahore", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({
+        areas: areas,
+        maxPages: 2,
+        maxListings: 15,
+        filterTokens: buildFilterTokens(),
+        customSearchUrl: "",
+        githubToken: "",
+      }),
+    });
+    var d = await r.json();
+    if (!r.ok) { setMsg("runMsg", d.error || "Dispatch failed", false); return; }
+    setMsg("runMsg", "✓ Dispatched — " + areas.length + " location(s)", true);
+    setTimeout(loadRuns, 2800);
+  } catch(err) { setMsg("runMsg", String(err), false); }
+  finally { btn.disabled = false; btn.textContent = "Run Lahore Scrape"; }
+}
+
+/* Runs table */
+function statusDot(status, conclusion) {
+  var cls = "dot-idle", label = status || "-";
+  if (conclusion === "success")      { cls = "dot-ok";      label = "success"; }
+  else if (conclusion === "failure") { cls = "dot-err";     label = "failed";  }
+  else if (status === "in_progress") { cls = "dot-running"; label = "running"; }
+  else if (status === "queued")      { cls = "dot-idle";    label = "queued";  }
+  return '<span class="status-dot"><span class="dot ' + cls + '"></span>' + label + '</span>';
+}
+
+async function loadRuns() {
+  var tbody = document.getElementById("runsTable");
+  tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">Loading…</td></tr>';
+  try {
+    var r = await fetch("/api/runs", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({githubToken:""}),
+    });
+    var d = await r.json();
+    if (!r.ok) {
+      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--err);padding:12px;">' + (d.error||"Error") + '</td></tr>';
+      return;
     }
-
-    function cleanToken(t) {
-      return String(t || "").trim().toLowerCase();
+    var runs = d.runs || [];
+    if (!runs.length) {
+      tbody.innerHTML = '<tr><td colspan="3" style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">No runs yet</td></tr>';
+      return;
     }
-
-    function dedupeTokens(tokens) {
-      const out = [];
-      for (const t of tokens) {
-        const x = cleanToken(t);
-        if (!x) continue;
-        if (!/^[a-z0-9][a-z0-9_-]*$/.test(x)) continue;
-        if (!out.includes(x)) out.push(x);
+    tbody.innerHTML = runs.map(function(run) {
+      var dt = new Date(run.created_at);
+      var time = dt.toLocaleDateString(undefined,{month:"short",day:"numeric"})
+               + " " + dt.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+      var links = ['<a href="' + run.html_url + '" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a>'];
+      if (run.xlsx_available && run.xlsx_download_url) {
+        links.push('<a href="' + run.xlsx_download_url + '">XLSX</a>');
       }
-      return out;
-    }
+      return '<tr>'
+        + '<td style="white-space:nowrap;color:var(--muted2);font-size:11.5px;">' + time + '</td>'
+        + '<td>' + statusDot(run.status, run.conclusion) + '</td>'
+        + '<td><div class="td-links">' + links.join("") + '</div></td>'
+        + '</tr>';
+    }).join("");
+  } catch(err) {
+    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--err);padding:12px;">' + String(err) + '</td></tr>';
+  }
+}
 
-    function splitEqToken(token) {
-      const match = cleanToken(token).match(/^([a-z0-9_]+_eq_)([a-z0-9_-]+)$/);
-      return match ? { prefix: match[1], value: match[2] } : null;
-    }
-
-    function getSingleSelectPrefix(token) {
-      const split = splitEqToken(token);
-      if (!split) return "";
-      return SINGLE_VALUE_PREFIXES.has(split.prefix) ? split.prefix : "";
-    }
-
-    function normalizeOlxFilterTokens(tokens) {
-      const ordered = dedupeTokens(tokens);
-      const output = [];
-      const positions = new Map();
-      const andGroups = new Map();
-
-      ordered.forEach((token) => {
-        const split = splitEqToken(token);
-        if (!split) {
-          output.push(token);
-          return;
-        }
-
-        if (AND_JOIN_PREFIXES.has(split.prefix)) {
-          if (!positions.has(split.prefix)) {
-            positions.set(split.prefix, output.length);
-            output.push("");
-            andGroups.set(split.prefix, []);
-          }
-          split.value.split("_and_").forEach((value) => {
-            if (!value) return;
-            const values = andGroups.get(split.prefix);
-            if (!values.includes(value)) {
-              values.push(value);
-            }
-          });
-          return;
-        }
-
-        if (SINGLE_VALUE_PREFIXES.has(split.prefix)) {
-          if (!positions.has(split.prefix)) {
-            positions.set(split.prefix, output.length);
-            output.push(token);
-          } else {
-            output[positions.get(split.prefix)] = token;
-          }
-          return;
-        }
-
-        output.push(token);
-      });
-
-      andGroups.forEach((values, prefix) => {
-        if (values.length) {
-          output[positions.get(prefix)] = prefix + values.join("_and_");
-        }
-      });
-
-      return output.filter(Boolean);
-    }
-
-    function areaSelection() {
-      return Array.from(document.querySelectorAll(".area-check:checked")).map((x) => x.value);
-    }
-
-    function selectAllAreas(on) {
-      document.querySelectorAll(".area-check").forEach((x) => { x.checked = on; });
-    }
-
-    function renderAreas() {
-      const root = document.getElementById("areas");
-      root.innerHTML = areaData.map((a) => (
-        '<label class="chip-box">' +
-        '<input class="area-check" type="checkbox" value="' + a.key + '" checked />' +
-        '<span>' + a.name + ' <span class="pill">' + a.key + '</span></span>' +
-        '</label>'
-      )).join("");
-    }
-
-    function renderTokenCheckboxes(rootId, options, className) {
-      const root = document.getElementById(rootId);
-      root.innerHTML = options.map((x) => (
-        '<label class="chip-box">' +
-        '<input type="checkbox" class="' + className + '" value="' + x[1] + '" data-single-prefix="' + getSingleSelectPrefix(x[1]) + '" />' +
-        '<span>' + x[0] + '</span>' +
-        '</label>'
-      )).join("");
-    }
-
-    function gatherCheckedTokens(className) {
-      return Array.from(document.querySelectorAll("." + className + ":checked")).map((x) => x.value);
-    }
-
-    function parseYearRangeToken() {
-      const value = document.getElementById("yearRange").value.trim();
-      if (!value) return [];
-      const m = value.match(/^(\d{4})\s*-\s*(\d{4})$/);
-      if (!m) return [];
-      return ["year_between_" + m[1] + "_to_" + m[2]];
-    }
-
-    function extractFilterTokensFromSearchParams(searchParams) {
-      const tokens = [];
-      for (const value of searchParams.getAll("filter")) {
-        String(value || "").split(",").forEach((part) => {
-          const token = String(part || "").trim();
-          if (token) {
-            tokens.push(token);
-          }
-        });
-      }
-      return tokens;
-    }
-
-    function parseExtraTokensField() {
-      const raw = document.getElementById("extraTokens").value.trim();
-      if (!raw) return [];
-      let tokens = [];
-      if (raw.startsWith("http://") || raw.startsWith("https://")) {
-        try {
-          const u = new URL(raw);
-          tokens = extractFilterTokensFromSearchParams(u.searchParams);
-        } catch (_err) {
-          tokens = raw.split(",");
-        }
-      } else if (raw.startsWith("?") || raw.includes("filter=")) {
-        const qs = new URLSearchParams(raw.replace(/^\?/, ""));
-        tokens = extractFilterTokensFromSearchParams(qs);
-      } else {
-        tokens = raw.split(",");
-      }
-      return tokens.map((x) => x.trim()).filter(Boolean);
-    }
-
-    function buildFilterTokens() {
-      const tokens = [];
-
-      const priceMin = document.getElementById("priceMin").value.trim();
-      const priceMax = document.getElementById("priceMax").value.trim();
-      if (priceMin) tokens.push("price_min_" + priceMin);
-      if (priceMax) tokens.push("price_max_" + priceMax);
-
-      const kmMin = document.getElementById("kmMin").value.trim();
-      const kmMax = document.getElementById("kmMax").value.trim();
-      if (kmMin) tokens.push("mileage_min_" + kmMin);
-      if (kmMax) tokens.push("mileage_max_" + kmMax);
-
-      tokens.push(...parseYearRangeToken());
-      tokens.push(...gatherCheckedTokens("tok-brand"));
-      tokens.push(...gatherCheckedTokens("tok-condition"));
-      tokens.push(...gatherCheckedTokens("tok-fuel"));
-      tokens.push(...gatherCheckedTokens("tok-trans"));
-      tokens.push(...gatherCheckedTokens("tok-body"));
-      tokens.push(...gatherCheckedTokens("tok-feature"));
-      tokens.push(...gatherCheckedTokens("tok-reg"));
-      tokens.push(...gatherCheckedTokens("tok-other"));
-      tokens.push(...parseExtraTokensField());
-
-      const finalTokens = normalizeOlxFilterTokens(tokens);
-      document.getElementById("tokenPreview").textContent = finalTokens.join(",");
-      return finalTokens.join(",");
-    }
-
-    function importFiltersFromUrl() {
-      const raw = document.getElementById("importUrl").value.trim();
-      if (!raw) {
-        setMsg("runMsg", "Import URL is empty.", false);
-        return;
-      }
-      try {
-        const u = new URL(raw);
-        const tok = extractFilterTokensFromSearchParams(u.searchParams).join(",");
-        document.getElementById("extraTokens").value = tok;
-        setMsg("runMsg", "Imported filter tokens from URL.", true);
-      } catch (_err) {
-        setMsg("runMsg", "Invalid URL for filter import.", false);
-      }
-      buildFilterTokens();
-    }
-
-    function clearAllFilters() {
-      [
-        "priceMin", "priceMax", "kmMin", "kmMax", "yearRange", "extraTokens", "importUrl"
-      ].forEach((id) => { document.getElementById(id).value = ""; });
-      document.querySelectorAll(".tok-brand,.tok-condition,.tok-fuel,.tok-trans,.tok-body,.tok-feature,.tok-reg,.tok-other")
-        .forEach((x) => { x.checked = false; });
-      buildFilterTokens();
-    }
-
-    function bindFilterPreview() {
-      const ids = ["priceMin", "priceMax", "kmMin", "kmMax", "yearRange", "extraTokens"];
-      ids.forEach((id) => {
-        document.getElementById(id).addEventListener("input", buildFilterTokens);
-      });
-      document.querySelectorAll(".tok-brand,.tok-condition,.tok-fuel,.tok-trans,.tok-body,.tok-feature,.tok-reg,.tok-other")
-        .forEach((x) => x.addEventListener("change", (event) => {
-          const prefix = event.target.dataset.singlePrefix || "";
-          if (event.target.checked && prefix) {
-            document.querySelectorAll('input[data-single-prefix="' + prefix + '"]').forEach((input) => {
-              if (input !== event.target) {
-                input.checked = false;
-              }
-            });
-          }
-          buildFilterTokens();
-        }));
-    }
-
-    function initializeFilterControls() {
-      renderTokenCheckboxes("brandChecks", BRAND_OPTIONS, "tok-brand");
-      renderTokenCheckboxes("conditionChecks", CONDITION_OPTIONS, "tok-condition");
-      renderTokenCheckboxes("fuelChecks", FUEL_OPTIONS, "tok-fuel");
-      renderTokenCheckboxes("transmissionChecks", TRANSMISSION_OPTIONS, "tok-trans");
-      renderTokenCheckboxes("bodyChecks", BODY_OPTIONS, "tok-body");
-      renderTokenCheckboxes("featureChecks", FEATURE_OPTIONS, "tok-feature");
-      renderTokenCheckboxes("regCityChecks", REG_CITY_OPTIONS, "tok-reg");
-      renderTokenCheckboxes("otherChecks", OTHER_OPTIONS, "tok-other");
-      bindFilterPreview();
-      buildFilterTokens();
-    }
-
-    async function login() {
-      setMsg("loginMsg", "", false);
-      const btn = document.getElementById("loginBtn");
-      btn.disabled = true;
-      try {
-        const resp = await fetch("/api/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            username: document.getElementById("username").value,
-            password: document.getElementById("password").value
-          })
-        });
-        const data = await resp.json();
-        if (!resp.ok) {
-          setMsg("loginMsg", data.error || "Login failed", false);
-          return;
-        }
-        setMsg("loginMsg", "Login successful", true);
-        await initSession();
-      } catch (err) {
-        setMsg("loginMsg", String(err), false);
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    async function logout() {
-      await fetch("/api/logout", { method: "POST" });
-      document.getElementById("panel").style.display = "none";
-      document.getElementById("loginCard").style.display = "block";
-    }
-
-    async function initSession() {
-      const resp = await fetch("/api/me");
-      if (!resp.ok) {
-        document.getElementById("panel").style.display = "none";
-        document.getElementById("loginCard").style.display = "block";
-        return;
-      }
-      const data = await resp.json();
-      areaData = data.karachiAreas || [];
-      renderAreas();
-      initializeFilterControls();
-      const patState = data.githubPatConfigured ? "configured on server" : "missing on server (provide in form above)";
-      document.getElementById("authMeta").textContent =
-        "Logged in as " + data.username + ". Workflow: " + data.workflow + " (" + data.ref + "). GitHub PAT: " + patState + ".";
-      document.getElementById("panel").style.display = "block";
-      document.getElementById("loginCard").style.display = "none";
-      await loadRuns();
-    }
-
-    async function runKarachi() {
-      setMsg("runMsg", "", false);
-      const selected = areaSelection();
-      const customSearchUrl = document.getElementById("customSearchUrl").value.trim();
-      if (!selected.length && !customSearchUrl) {
-        setMsg("runMsg", "Select at least one Karachi area or provide a customSearchUrl.", false);
-        return;
-      }
-
-      const btn = document.getElementById("runBtn");
-      btn.disabled = true;
-      const filterTokens = buildFilterTokens();
-      const githubToken = document.getElementById("githubPat").value.trim();
-
-      try {
-        const resp = await fetch("/api/run-karachi", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            areas: selected,
-            maxPages: document.getElementById("maxPages").value,
-            maxListings: document.getElementById("maxListings").value,
-            githubToken,
-            filterTokens,
-            customSearchUrl
-          })
-        });
-        const data = await resp.json();
-        if (!resp.ok) {
-          setMsg("runMsg", data.error || "Dispatch failed", false);
-          return;
-        }
-        setMsg("runMsg", data.message + " Areas: " + data.areas.join(", "), true);
-        await loadRuns();
-      } catch (err) {
-        setMsg("runMsg", String(err), false);
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    function cell(v) {
-      const td = document.createElement("td");
-      td.textContent = v || "";
-      return td;
-    }
-
-    async function loadRuns() {
-      const tbody = document.getElementById("runsTable");
-      tbody.innerHTML = "";
-      const githubToken = document.getElementById("githubPat").value.trim();
-      try {
-        const resp = await fetch("/api/runs", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ githubToken })
-        });
-        const data = await resp.json();
-        if (!resp.ok) {
-          const tr = document.createElement("tr");
-          tr.appendChild(cell("Error"));
-          tr.appendChild(cell(data.error || "Unable to fetch runs"));
-          tr.appendChild(cell(""));
-          tr.appendChild(cell(""));
-          tr.appendChild(cell(""));
-          tr.appendChild(cell(""));
-          tbody.appendChild(tr);
-          return;
-        }
-
-        (data.runs || []).forEach((r) => {
-          const tr = document.createElement("tr");
-          tr.appendChild(cell(new Date(r.created_at).toLocaleString()));
-          tr.appendChild(cell(r.status));
-          tr.appendChild(cell(r.conclusion || "-"));
-          tr.appendChild(cell(r.display_title || ""));
-          tr.appendChild(cell(r.actor || ""));
-          const actionsTd = document.createElement("td");
-          const actions = document.createElement("div");
-          actions.className = "action-links";
-
-          const openLink = document.createElement("a");
-          openLink.href = r.html_url;
-          openLink.target = "_blank";
-          openLink.rel = "noopener noreferrer";
-          openLink.textContent = "Open Run";
-          actions.appendChild(openLink);
-
-          if (r.xlsx_available && r.xlsx_download_url) {
-            const xlsxLink = document.createElement("a");
-            xlsxLink.href = r.xlsx_download_url;
-            xlsxLink.textContent = "Download XLSX";
-            actions.appendChild(xlsxLink);
-          } else {
-            const muted = document.createElement("span");
-            muted.className = "muted";
-            muted.textContent = "XLSX not available";
-            actions.appendChild(muted);
-          }
-
-          actionsTd.appendChild(actions);
-          tr.appendChild(actionsTd);
-          tbody.appendChild(tr);
-        });
-      } catch (err) {
-        const tr = document.createElement("tr");
-        tr.appendChild(cell("Error"));
-        tr.appendChild(cell(String(err)));
-        tr.appendChild(cell(""));
-        tr.appendChild(cell(""));
-        tr.appendChild(cell(""));
-        tr.appendChild(cell(""));
-        tbody.appendChild(tr);
-      }
-    }
-
-    initSession();
-  </script>
+initSession();
+</script>
 </body>
 </html>
-
