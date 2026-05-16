@@ -181,6 +181,58 @@ def parse_filter_tokens(raw: str) -> List[str]:
     return _dedupe_preserve_order(clean)
 
 
+def price_bounds_from_filter_tokens(tokens: List[str]) -> Optional[Tuple[Optional[int], Optional[int]]]:
+    """Return the requested OLX price bounds, if present."""
+    min_price: Optional[int] = None
+    max_price: Optional[int] = None
+
+    for token in tokens:
+        min_match = re.fullmatch(r"price_min_(\d+)", token)
+        if min_match:
+            min_price = int(min_match.group(1))
+            continue
+
+        max_match = re.fullmatch(r"price_max_(\d+)", token)
+        if max_match:
+            max_price = int(max_match.group(1))
+
+    if min_price is None and max_price is None:
+        return None
+
+    return min_price, max_price
+
+
+def parse_price_value(value: str) -> Optional[int]:
+    """Convert OLX price text such as 'Rs 2,390,000' into an integer."""
+    digits = re.sub(r"\D", "", str(value or ""))
+    return int(digits) if digits else None
+
+
+def listing_matches_price_filters(
+    listing: Dict[str, str],
+    price_bounds: Optional[Tuple[Optional[int], Optional[int]]],
+) -> bool:
+    """Reject unpriced, blocked, or out-of-range listings when price filters are active."""
+    if not price_bounds:
+        return True
+
+    title = str(listing.get("Title") or "").strip().lower()
+    if title in {"error1015", "error 1015", "access denied"}:
+        return False
+
+    price = parse_price_value(listing.get("Price", ""))
+    if price is None:
+        return False
+
+    min_price, max_price = price_bounds
+    if min_price is not None and price < min_price:
+        return False
+    if max_price is not None and price > max_price:
+        return False
+
+    return True
+
+
 def build_list_page_url(base_url: str, page: int, extra_filter_tokens: Optional[List[str]] = None) -> str:
     """Merge pagination and filter tokens into a list-page URL."""
     split = urlsplit(base_url)
@@ -621,6 +673,7 @@ def scrape_listings(
     max_pages = max_pages or SCRAPER_CONFIG.DEFAULT_MAX_PAGES
     max_listings_per_location = SCRAPER_CONFIG.LISTINGS_PER_LOCATION
     parsed_filter_tokens = parse_filter_tokens(filter_tokens)
+    price_bounds = price_bounds_from_filter_tokens(parsed_filter_tokens)
     custom_search_url = (custom_search_url or "").strip()
     
     # Determine which locations to scrape
@@ -734,6 +787,13 @@ def scrape_listings(
                 # Add location metadata
                 merged["Scraped_Location"] = location_name
                 merged["Location_Key"] = location_key
+
+                if not listing_matches_price_filters(merged, price_bounds):
+                    if progress_callback:
+                        progress_callback(
+                            f"📍 {location_name}: Skipped listing outside requested price range or without a valid price."
+                        )
+                    continue
                 
                 location_results.append(merged)
                 

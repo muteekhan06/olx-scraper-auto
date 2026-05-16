@@ -21,7 +21,12 @@ sys.modules.setdefault(
 )
 sys.modules.setdefault("app.driver", types.SimpleNamespace(build_driver=lambda *args, **kwargs: None))
 
-from app.scraper import build_list_page_url, parse_filter_tokens
+from app.scraper import (
+    build_list_page_url,
+    listing_matches_price_filters,
+    parse_filter_tokens,
+    price_bounds_from_filter_tokens,
+)
 
 
 class PriceFilterTests(unittest.TestCase):
@@ -50,6 +55,35 @@ class PriceFilterTests(unittest.TestCase):
         tokens = parse_filter_tokens("?filter=price_min_1000000,price_max_5000000")
 
         self.assertEqual(tokens, ["price_min_1000000", "price_max_5000000"])
+
+    def test_price_bounds_from_filter_tokens(self):
+        bounds = price_bounds_from_filter_tokens(["price_min_1000000", "price_max_5000000"])
+
+        self.assertEqual(bounds, (1000000, 5000000))
+
+    def test_listing_matches_price_filters_accepts_in_range_formatted_price(self):
+        self.assertTrue(
+            listing_matches_price_filters(
+                {"Title": "Toyota Corolla", "Price": "Rs 2,390,000"},
+                (1000000, 5000000),
+            )
+        )
+
+    def test_listing_matches_price_filters_rejects_out_of_range_price(self):
+        self.assertFalse(
+            listing_matches_price_filters(
+                {"Title": "Toyota Corolla", "Price": "Rs 7,500,000"},
+                (1000000, 5000000),
+            )
+        )
+
+    def test_listing_matches_price_filters_rejects_blocked_or_unpriced_rows(self):
+        self.assertFalse(
+            listing_matches_price_filters(
+                {"Title": "Error1015", "Price": ""},
+                (1000000, 5000000),
+            )
+        )
 
 
 if __name__ == "__main__":
