@@ -535,11 +535,11 @@
           <div class="price-row">
             <div class="field">
               <label class="field-label" for="priceMin">Min</label>
-              <input id="priceMin" type="number" min="0" step="100000" placeholder="e.g. 1,000,000" />
+              <input id="priceMin" type="text" inputmode="numeric" autocomplete="off" placeholder="e.g. 1,000,000" onblur="formatPriceInput('priceMin')" />
             </div>
             <div class="field">
               <label class="field-label" for="priceMax">Max</label>
-              <input id="priceMax" type="number" min="0" step="100000" placeholder="e.g. 5,000,000" />
+              <input id="priceMax" type="text" inputmode="numeric" autocomplete="off" placeholder="e.g. 5,000,000" onblur="formatPriceInput('priceMax')" />
             </div>
           </div>
 
@@ -885,10 +885,43 @@ function escHtml(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
+function normalizePriceInput(id) {
+  var raw = (document.getElementById(id).value || "").trim();
+  if (!raw) return "";
+  var digits = raw.replace(/[,\s]/g, "");
+  if (!/^\d+$/.test(digits)) return null;
+  digits = digits.replace(/^0+(?=\d)/, "");
+  return digits;
+}
+
+function formatPriceInput(id) {
+  var el = document.getElementById(id);
+  var normalized = normalizePriceInput(id);
+  if (normalized) {
+    el.value = Number(normalized).toLocaleString("en-US");
+  }
+}
+
+function validatePriceRange() {
+  var pMin = normalizePriceInput("priceMin");
+  var pMax = normalizePriceInput("priceMax");
+  if (pMin === null || pMax === null) {
+    return { ok: false, message: "Use numbers only for price. Commas are fine." };
+  }
+  if (pMin && pMax && Number(pMin) > Number(pMax)) {
+    return { ok: false, message: "Minimum price cannot be greater than maximum price." };
+  }
+  return { ok: true, min: pMin || "", max: pMax || "" };
+}
+
 function buildFilterTokens() {
   var tokens = [];
-  var pMin = (document.getElementById("priceMin").value || "").trim();
-  var pMax = (document.getElementById("priceMax").value || "").trim();
+  var priceRange = validatePriceRange();
+  if (!priceRange.ok) {
+    return null;
+  }
+  var pMin = priceRange.min;
+  var pMax = priceRange.max;
   if (pMin) tokens.push("price_min_" + pMin);
   if (pMax) tokens.push("price_max_" + pMax);
   if (selectedBrand) tokens.push(selectedBrand);
@@ -967,6 +1000,12 @@ async function runLahore() {
     setMsg("runMsg", "⚠ Select at least one location to continue", "warn");
     return;
   }
+  var priceRange = validatePriceRange();
+  if (!priceRange.ok) {
+    setMsg("runMsg", "⚠ " + priceRange.message, "warn");
+    return;
+  }
+  var filterTokens = buildFilterTokens();
   var btn = document.getElementById("runBtn");
   btn.disabled = true; btn.textContent = "Dispatching…";
   try {
@@ -977,7 +1016,7 @@ async function runLahore() {
         areas:           areas,
         maxPages:        2,
         maxListings:     15,
-        filterTokens:    buildFilterTokens(),
+        filterTokens:    filterTokens,
         customSearchUrl: "",
         githubToken:     "",
       }),
