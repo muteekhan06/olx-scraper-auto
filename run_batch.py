@@ -170,14 +170,18 @@ def main():
         if is_google_sheets_configured():
             log("Phase 4: Uploading to Google Sheets")
             sheet_id = OUTPUT_CONFIG.GOOGLE_SHEET_ID
-            if sheet_id:
-                url = export_to_google_sheets(
-                    data=listings,
-                    spreadsheet_id=sheet_id,
-                    progress_callback=log
+            if not sheet_id:
+                raise RuntimeError(
+                    "GOOGLE_SHEET_ID is missing. Set GOOGLE_SHEET_ID or map the city-specific sheet secret in the workflow."
                 )
-                stats["sheet_url"] = url
-                log(f"🎉 Success! Sheet updated: {url}")
+
+            url = export_to_google_sheets(
+                data=listings,
+                spreadsheet_id=sheet_id,
+                progress_callback=log
+            )
+            stats["sheet_url"] = url
+            log(f"🎉 Success! Sheet updated: {url}")
         
         # Send Success Notification (Discord)
         send_whatsapp_alert = None

@@ -136,7 +136,7 @@ jobs:
           FILTER_TOKENS: ${{ env.FILTER_TOKENS }}
           CUSTOM_SEARCH_URL: ${{ env.CUSTOM_SEARCH_URL }}
           
-          GOOGLE_SHEET_ID: ${{ secrets.LAHORE_SHEET_ID }}
+          GOOGLE_SHEET_ID: ${{ secrets.LAHORE_SHEET_ID || secrets.GOOGLE_SHEET_ID }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
           WHATSAPP_API_KEY: ${{ secrets.WHATSAPP_API_KEY }}
