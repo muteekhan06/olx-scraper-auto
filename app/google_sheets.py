@@ -8,8 +8,9 @@ Supported auth modes:
 
 import json
 import os
+import re
 from datetime import date
-from typing import Dict, List
+from typing import Dict, List, Optional, Set
 
 from app.config import OUTPUT_CONFIG, CONFIG_DIR
 
@@ -20,6 +21,7 @@ SERVICE_ACCOUNT_FILE = os.path.join(CONFIG_DIR, "service_account.json")
 TOKEN_FILE = os.path.join(CONFIG_DIR, "google_token.json")
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SERVICE_ACCOUNT_ENV = "GOOGLE_SERVICE_ACCOUNT_JSON"
+HISTORY_EXCLUDED_SHEETS = {"readme", "summary", "dashboard"}
 
 
 def _load_service_account_info():
@@ -185,6 +187,106 @@ def clean_value(v) -> str:
             return ""
         return v
     return str(v)
+
+
+def extract_lead_key(row: Dict) -> str:
+    """Build a stable lead key from OLX Ad ID, falling back to iid in the URL."""
+    ad_id = clean_value(row.get("Ad ID") or row.get("ad_id") or row.get("id"))
+    ad_id = ad_id.replace("Ad ID", "").replace(":", "").strip()
+    if ad_id:
+        return f"ad:{ad_id.lower()}"
+
+    link = clean_value(row.get("Link") or row.get("link") or row.get("URL") or row.get("url"))
+    match = re.search(r"iid-([A-Za-z0-9_-]+)", link)
+    if match:
+        return f"iid:{match.group(1).lower()}"
+
+    return ""
+
+
+def extract_link_from_formula(value: str) -> str:
+    """Extract URL from a Sheets HYPERLINK formula if the cell is formula-rendered."""
+    text = str(value or "").strip()
+    match = re.match(r'=HYPERLINK\("([^"]+)"\s*,', text, flags=re.I)
+    return match.group(1) if match else text
+
+
+def _row_dict_from_values(headers: List[str], values: List[str]) -> Dict:
+    row: Dict[str, str] = {}
+    for index, header in enumerate(headers):
+        if not header:
+            continue
+        value = values[index] if index < len(values) else ""
+        if header == "Link":
+            value = extract_link_from_formula(value)
+        row[header] = value
+    return row
+
+
+def get_existing_lead_keys(
+    spreadsheet_id: str,
+    exclude_sheet_name: Optional[str] = None,
+    service=None,
+    progress_callback=None,
+) -> Set[str]:
+    """Read historical daily tabs and return known OLX lead keys."""
+    service = service or get_sheets_service()
+    spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+
+    excluded = {name.lower() for name in HISTORY_EXCLUDED_SHEETS}
+    if exclude_sheet_name:
+        excluded.add(exclude_sheet_name.lower())
+
+    keys: Set[str] = set()
+    sheet_count = 0
+
+    for sheet in spreadsheet.get("sheets", []):
+        title = sheet.get("properties", {}).get("title", "")
+        if not title or title.lower() in excluded:
+            continue
+
+        values = service.spreadsheets().values().get(
+            spreadsheetId=spreadsheet_id,
+            range=f"'{title}'!A:ZZ",
+            valueRenderOption="FORMULA",
+        ).execute().get("values", [])
+
+        if not values:
+            continue
+
+        headers = [str(header).strip() for header in values[0]]
+        if "Ad ID" not in headers and "Link" not in headers:
+            continue
+
+        sheet_count += 1
+        for values_row in values[1:]:
+            key = extract_lead_key(_row_dict_from_values(headers, values_row))
+            if key:
+                keys.add(key)
+
+    if progress_callback:
+        progress_callback(f"Loaded {len(keys)} historical lead keys from {sheet_count} previous sheet tab(s).")
+
+    return keys
+
+
+def remove_duplicate_leads(
+    data: List[Dict],
+    existing_keys: Optional[Set[str]] = None,
+) -> List[Dict]:
+    """Remove leads already seen historically and duplicates inside the current batch."""
+    seen = set(existing_keys or set())
+    output: List[Dict] = []
+
+    for row in data:
+        key = extract_lead_key(row)
+        if key and key in seen:
+            continue
+        if key:
+            seen.add(key)
+        output.append(row)
+
+    return output
 
 
 def export_to_google_sheets(

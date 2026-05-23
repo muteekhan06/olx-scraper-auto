@@ -17,7 +17,12 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from app.scraper import scrape_listings
 from app.contact_fetcher import fetch_contacts
 from app.exporter import export_to_json, export_to_tsv, export_to_xlsx
-from app.google_sheets import is_google_sheets_configured, export_to_google_sheets
+from app.google_sheets import (
+    export_to_google_sheets,
+    get_existing_lead_keys,
+    is_google_sheets_configured,
+    remove_duplicate_leads,
+)
 from app.config import OUTPUT_CONFIG
 
 def log(msg):
@@ -31,6 +36,10 @@ def build_export_filename(locations, custom_search_url):
     else:
         suffix = (locations or "all").strip().lower().replace(",", "_").replace(" ", "_")
     return f"olx_{suffix}_{date_stamp}"
+
+
+def build_sheet_name():
+    return datetime.now().strftime("%d-%m-%Y")
 
 def send_notification(status_type, stats=None, error=None):
     """Send a premium notification to Discord."""
@@ -151,6 +160,36 @@ def main():
         
         stats["count"] = len(listings)
         log(f"✅ Discovered {len(listings)} listings.")
+
+        sheet_id = OUTPUT_CONFIG.GOOGLE_SHEET_ID
+        sheet_name = build_sheet_name()
+
+        if is_google_sheets_configured():
+            if not sheet_id:
+                raise RuntimeError(
+                    "GOOGLE_SHEET_ID is missing. Set GOOGLE_SHEET_ID or map the city-specific sheet secret in the workflow."
+                )
+
+            log("Checking previous Google Sheet tabs for duplicate leads...")
+            before_dedupe = len(listings)
+            existing_keys = get_existing_lead_keys(
+                spreadsheet_id=sheet_id,
+                exclude_sheet_name=sheet_name,
+                progress_callback=log,
+            )
+            listings = remove_duplicate_leads(listings, existing_keys)
+            skipped = before_dedupe - len(listings)
+            if skipped:
+                log(f"🧹 Skipped {skipped} duplicate lead(s) already present in previous sheet tabs.")
+            else:
+                log("🧹 No historical duplicate leads found.")
+
+            if not listings:
+                log("❌ No new unique leads found after duplicate filtering. Exiting without export.")
+                send_notification("error", stats, error="No new unique leads found after duplicate filtering.")
+                return
+
+            stats["count"] = len(listings)
         
         # 2. Fetch Contacts (Guest Mode)
         log("Phase 2: Contact Enrichment")
@@ -169,15 +208,10 @@ def main():
         # 4. Export to Google Sheets
         if is_google_sheets_configured():
             log("Phase 4: Uploading to Google Sheets")
-            sheet_id = OUTPUT_CONFIG.GOOGLE_SHEET_ID
-            if not sheet_id:
-                raise RuntimeError(
-                    "GOOGLE_SHEET_ID is missing. Set GOOGLE_SHEET_ID or map the city-specific sheet secret in the workflow."
-                )
-
             url = export_to_google_sheets(
                 data=listings,
                 spreadsheet_id=sheet_id,
+                sheet_name=sheet_name,
                 progress_callback=log
             )
             stats["sheet_url"] = url
