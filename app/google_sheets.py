@@ -22,6 +22,7 @@ TOKEN_FILE = os.path.join(CONFIG_DIR, "google_token.json")
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SERVICE_ACCOUNT_ENV = "GOOGLE_SERVICE_ACCOUNT_JSON"
 HISTORY_EXCLUDED_SHEETS = {"readme", "summary", "dashboard"}
+HISTORY_BATCH_RANGE_SIZE = 40
 
 
 def _load_service_account_info():
@@ -223,6 +224,11 @@ def _row_dict_from_values(headers: List[str], values: List[str]) -> Dict:
     return row
 
 
+def _chunks(values: List[str], size: int):
+    for index in range(0, len(values), size):
+        yield values[index:index + size]
+
+
 def get_existing_lead_keys(
     spreadsheet_id: str,
     exclude_sheet_name: Optional[str] = None,
@@ -237,35 +243,44 @@ def get_existing_lead_keys(
     if exclude_sheet_name:
         excluded.add(exclude_sheet_name.lower())
 
-    keys: Set[str] = set()
-    sheet_count = 0
+    ranges: List[str] = []
 
     for sheet in spreadsheet.get("sheets", []):
         title = sheet.get("properties", {}).get("title", "")
         if not title or title.lower() in excluded:
             continue
+        ranges.append(f"'{title}'!A:ZZ")
 
-        values = service.spreadsheets().values().get(
+    keys: Set[str] = set()
+    sheet_count = 0
+
+    for range_chunk in _chunks(ranges, HISTORY_BATCH_RANGE_SIZE):
+        response = service.spreadsheets().values().batchGet(
             spreadsheetId=spreadsheet_id,
-            range=f"'{title}'!A:ZZ",
+            ranges=range_chunk,
             valueRenderOption="FORMULA",
-        ).execute().get("values", [])
+        ).execute()
 
-        if not values:
-            continue
+        for value_range in response.get("valueRanges", []):
+            values = value_range.get("values", [])
+            if not values:
+                continue
 
-        headers = [str(header).strip() for header in values[0]]
-        if "Ad ID" not in headers and "Link" not in headers:
-            continue
+            headers = [str(header).strip() for header in values[0]]
+            if "Ad ID" not in headers and "Link" not in headers:
+                continue
 
-        sheet_count += 1
-        for values_row in values[1:]:
-            key = extract_lead_key(_row_dict_from_values(headers, values_row))
-            if key:
-                keys.add(key)
+            sheet_count += 1
+            for values_row in values[1:]:
+                key = extract_lead_key(_row_dict_from_values(headers, values_row))
+                if key:
+                    keys.add(key)
 
     if progress_callback:
-        progress_callback(f"Loaded {len(keys)} historical lead keys from {sheet_count} previous sheet tab(s).")
+        progress_callback(
+            f"Loaded {len(keys)} historical lead keys from {sheet_count} previous sheet tab(s) "
+            f"using {max(1, (len(ranges) + HISTORY_BATCH_RANGE_SIZE - 1) // HISTORY_BATCH_RANGE_SIZE)} batched read request(s)."
+        )
 
     return keys
 

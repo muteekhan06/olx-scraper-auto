@@ -16,13 +16,15 @@ from app.google_sheets import (
 class _FakeValues:
     def __init__(self, tab_values):
         self.tab_values = tab_values
-        self.requested_ranges = []
+        self.batch_requests = []
 
-    def get(self, spreadsheetId, range, valueRenderOption=None):
-        self.requested_ranges.append((range, valueRenderOption))
-        title = range.split("!", 1)[0].strip("'")
-        values = self.tab_values.get(title, [])
-        return types.SimpleNamespace(execute=lambda: {"values": values})
+    def batchGet(self, spreadsheetId, ranges, valueRenderOption=None):
+        self.batch_requests.append((tuple(ranges), valueRenderOption))
+        value_ranges = []
+        for range_name in ranges:
+            title = range_name.split("!", 1)[0].strip("'")
+            value_ranges.append({"range": range_name, "values": self.tab_values.get(title, [])})
+        return types.SimpleNamespace(execute=lambda: {"valueRanges": value_ranges})
 
 
 class _FakeSpreadsheets:
@@ -90,9 +92,19 @@ class DuplicateLeadTests(unittest.TestCase):
 
         self.assertEqual(keys, {"ad:111", "iid:222"})
         self.assertEqual(
-            service.spreadsheets_api.values_api.requested_ranges,
-            [("'21-05-2026'!A:ZZ", "FORMULA"), ("'22-05-2026'!A:ZZ", "FORMULA")],
+            service.spreadsheets_api.values_api.batch_requests,
+            [(("'21-05-2026'!A:ZZ", "'22-05-2026'!A:ZZ"), "FORMULA")],
         )
+
+    def test_get_existing_lead_keys_batches_many_tabs_to_avoid_read_quota(self):
+        tabs = [f"{day:02d}-01-2026" for day in range(1, 62)]
+        tab_values = {title: [["Ad ID"], [str(index)]] for index, title in enumerate(tabs, 1)}
+        service = _FakeService(tabs=tabs, tab_values=tab_values)
+
+        keys = get_existing_lead_keys("sheet-id", service=service)
+
+        self.assertEqual(len(keys), 61)
+        self.assertEqual(len(service.spreadsheets_api.values_api.batch_requests), 2)
 
 
 if __name__ == "__main__":
