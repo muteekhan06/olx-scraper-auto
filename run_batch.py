@@ -16,6 +16,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # Import scraper and exporter functions
 from app.scraper import scrape_listings
 from app.contact_fetcher import fetch_contacts
+from app.export_filenames import build_export_filename
 from app.exporter import export_to_json, export_to_tsv, export_to_xlsx
 from app.google_sheets import (
     export_to_google_sheets,
@@ -27,15 +28,6 @@ from app.config import OUTPUT_CONFIG
 
 def log(msg):
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}", flush=True)
-
-
-def build_export_filename(locations, custom_search_url):
-    date_stamp = datetime.now().strftime("%Y-%m-%d")
-    if custom_search_url:
-        suffix = "custom_search"
-    else:
-        suffix = (locations or "all").strip().lower().replace(",", "_").replace(" ", "_")
-    return f"olx_{suffix}_{date_stamp}"
 
 
 def build_sheet_name():
