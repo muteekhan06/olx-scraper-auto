@@ -11,6 +11,8 @@ test("normalizeGithubToken removes common paste artifacts", () => {
   assert.equal(normalizeGithubToken(' "github_pat_example" '), "github_pat_example");
   assert.equal(normalizeGithubToken("Bearer ghp_example"), "ghp_example");
   assert.equal(normalizeGithubToken("'ghp_example'"), "ghp_example");
+  assert.equal(normalizeGithubToken("gho_example\\n"), "gho_example");
+  assert.equal(normalizeGithubToken("gho_example\n"), "gho_example");
 });
 
 test("getGithubConfig accepts GH_TOKEN fallback when GITHUB_PAT is absent", () => {

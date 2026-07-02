@@ -177,6 +177,7 @@ function normalizeGithubToken(value) {
   ) {
     token = token.slice(1, -1).trim();
   }
+  token = token.replace(/\\r|\\n/g, "").replace(/[\r\n]/g, "").trim();
   return token;
 }
 
