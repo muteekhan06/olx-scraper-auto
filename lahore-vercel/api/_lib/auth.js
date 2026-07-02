@@ -168,19 +168,59 @@ function requireAuth(req, res) {
   return payload;
 }
 
+function normalizeGithubToken(value) {
+  let token = String(value || "").trim();
+  token = token.replace(/^Bearer\s+/i, "").trim();
+  if (
+    (token.startsWith('"') && token.endsWith('"')) ||
+    (token.startsWith("'") && token.endsWith("'"))
+  ) {
+    token = token.slice(1, -1).trim();
+  }
+  return token;
+}
+
 function getGithubConfig(tokenOverride = "") {
   const owner = (process.env.GITHUB_OWNER || "muteekhan06").trim();
   const repo = (process.env.GITHUB_REPO || "olx-scraper-auto").trim();
-  const token = (String(tokenOverride || "") || (process.env.GITHUB_PAT || "")).trim();
+  const token = normalizeGithubToken(
+    tokenOverride || process.env.GITHUB_PAT || process.env.GH_TOKEN || ""
+  );
   const workflowFile = "lahore_daily_scrape.yml";
   const ref = (process.env.LAHORE_WORKFLOW_REF || "main").trim();
   return { owner, repo, token, workflowFile, ref };
 }
 
+async function buildGithubApiError(resp, prefix = "GitHub API failed") {
+  const text = await resp.text();
+  let detail = text;
+  try {
+    const parsed = JSON.parse(text);
+    detail = parsed.message || text;
+  } catch (_err) {
+    // Keep the raw response text when GitHub does not return JSON.
+  }
+
+  const err = new Error(`${prefix} (${resp.status}): ${detail}`);
+  err.status = resp.status;
+  err.githubStatus = resp.status;
+  err.githubDetail = detail;
+
+  if (resp.status === 401 || resp.status === 403) {
+    err.message =
+      "GitHub credentials failed. Update the GITHUB_PAT environment variable in Vercel with a valid GitHub token that has Actions workflow permissions for this repository.";
+  } else if (resp.status === 404) {
+    err.message =
+      "GitHub workflow or repository was not found. Check GITHUB_OWNER, GITHUB_REPO, LAHORE_WORKFLOW_REF, and that lahore_daily_scrape.yml exists on the selected branch.";
+  }
+
+  return err;
+}
+
 async function githubRequest(path, options = {}, tokenOverride = "") {
   const cfg = getGithubConfig(tokenOverride);
   if (!cfg.token) {
-    const err = new Error("GITHUB_PAT is missing.");
+    const err = new Error("GITHUB_PAT is missing in Vercel. Add a GitHub token with Actions workflow permissions.");
     err.status = 500;
     throw err;
   }
@@ -196,10 +236,7 @@ async function githubRequest(path, options = {}, tokenOverride = "") {
   });
 
   if (!resp.ok) {
-    const text = await resp.text();
-    const err = new Error(`GitHub API failed (${resp.status}): ${text}`);
-    err.status = resp.status;
-    throw err;
+    throw await buildGithubApiError(resp);
   }
 
   if (resp.status === 204) {
@@ -211,12 +248,14 @@ async function githubRequest(path, options = {}, tokenOverride = "") {
 
 module.exports = {
   COOKIE_NAME,
+  buildGithubApiError,
   clearSessionCookie,
   createSessionToken,
   getGithubConfig,
   getSessionSecret,
   githubRequest,
   json,
+  normalizeGithubToken,
   parseCookies,
   readJsonBody,
   requireAuth,

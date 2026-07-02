@@ -1,6 +1,6 @@
 const AdmZip = require("adm-zip");
 
-const { getGithubConfig, githubRequest, json, requireAuth } = require("./_lib/auth");
+const { buildGithubApiError, getGithubConfig, githubRequest, json, requireAuth } = require("./_lib/auth");
 
 function parseQuery(req) {
   return new URL(req.url, "https://dashboard.local").searchParams;
@@ -16,7 +16,7 @@ function sanitizeFilename(name) {
 
 async function fetchArtifactZip(cfg, artifactId) {
   if (!cfg.token) {
-    const err = new Error("GITHUB_PAT is missing.");
+    const err = new Error("GITHUB_PAT is missing in Vercel. Add a GitHub token with Actions workflow permissions.");
     err.status = 500;
     throw err;
   }
@@ -34,10 +34,7 @@ async function fetchArtifactZip(cfg, artifactId) {
   );
 
   if (!resp.ok) {
-    const text = await resp.text();
-    const err = new Error(`GitHub artifact download failed (${resp.status}): ${text}`);
-    err.status = resp.status;
-    throw err;
+    throw await buildGithubApiError(resp, "GitHub artifact download failed");
   }
 
   return Buffer.from(await resp.arrayBuffer());
